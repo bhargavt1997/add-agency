@@ -1,0 +1,10 @@
+# data-schema-snapshot.yaml — Greenfield Project
+# No existing schema to snapshot — this is a new build.
+# Schema will be designed in the data-model architecture doc and implemented in Wave 0 (walking skeleton).
+
+snapshot_type: greenfield
+existing_tables: []
+existing_indices: []
+existing_collections: []
+migration_required: false
+notes: "All data stores are to be created fresh; no legacy schema migration needed."

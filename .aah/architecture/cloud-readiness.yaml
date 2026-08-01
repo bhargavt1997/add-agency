@@ -1,0 +1,105 @@
+# cloud-readiness.yaml — Design-Time Placeholders
+# gate_status: skipped — /aah-access not run yet; real AWS coordinates to be filled in when resources are provisioned.
+# All service IDs below are design-time identifiers used by module-map.yaml and architecture docs.
+# Replace endpoint/arn/secret_ref values with real coordinates after resource provisioning.
+
+gate_status: skipped
+skip_reason: "User elected to proceed with design-time placeholders; resources to be provisioned and validated via /aah-access before deployment"
+cloud_provider: aws
+primary_region: us-east-1
+eu_region: eu-west-1
+
+services:
+
+  - id: svc-001
+    name: Bedrock AgentCore Runtime
+    service_type: bedrock-agentcore-runtime
+    coordinates:
+      endpoint: "https://bedrock-agentcore.us-east-1.amazonaws.com"  # placeholder — real ARN after provisioning
+      agent_runtime_arn: "arn:aws:bedrock:us-east-1:<account-id>:agent-runtime/agentic-campaign-orchestrator"
+    auth_method: iam-role
+    secret_ref: null
+    notes: "Managed serverless agent runtime; LangGraph StateGraph executor; per-session microVM isolation"
+
+  - id: svc-002
+    name: OpenSearch Serverless (Vector Store)
+    service_type: opensearch-serverless
+    coordinates:
+      endpoint: "https://<collection-id>.us-east-1.aoss.amazonaws.com"  # placeholder
+      collection_name: "campaign-brand-guidelines"
+      index_prefix: "tenant-"
+    auth_method: iam-sigv4
+    secret_ref: null
+    notes: "k-NN + BM25 hybrid search; index-per-tenant isolation; Amazon Titan Text Embeddings v2"
+
+  - id: svc-003
+    name: Aurora Serverless PostgreSQL
+    service_type: aurora-serverless-postgres
+    coordinates:
+      endpoint: "<cluster-id>.cluster-<hash>.us-east-1.rds.amazonaws.com"  # placeholder
+      port: 5432
+      database: "campaign_orchestrator"
+    auth_method: secrets-manager
+    secret_ref: "agentic-campaign-orchestrator/aurora/admin"  # placeholder secret name
+    notes: "Campaign metrics (CPC/CTR/ROAS), tenant configs, brand hard rules; RLS on tenant_id"
+
+  - id: svc-004
+    name: DynamoDB
+    service_type: dynamodb
+    coordinates:
+      table_action_audit: "campaign-orchestrator-action-audit"
+      table_session_state: "campaign-orchestrator-session-state"
+      table_human_confirmation: "campaign-orchestrator-human-confirmations"
+      table_pii_audience: "campaign-orchestrator-pii-audience"
+    auth_method: iam-role
+    secret_ref: null
+    notes: "Partition key = tenant_id#resource_id; action-audit is append-only (immutable); pii-audience is IAM-gated"
+
+  - id: svc-005
+    name: Bedrock AgentCore Memory
+    service_type: bedrock-agentcore-memory
+    coordinates:
+      memory_store_id: "<memory-store-id>"  # placeholder
+    auth_method: iam-role
+    secret_ref: null
+    notes: "EPISODIC + SEMANTIC memory strategies; cross-run campaign intervention recall"
+
+  - id: svc-006
+    name: Bedrock Guardrails
+    service_type: bedrock-guardrails
+    coordinates:
+      guardrail_id: "<guardrail-id>"  # placeholder
+      guardrail_version: "DRAFT"
+    auth_method: iam-role
+    secret_ref: null
+    notes: "PII redaction + content policy at RAG ingest + LLM inference layers; per-tenant configurable"
+
+  - id: svc-007
+    name: AWS Cognito
+    service_type: cognito-user-pool
+    coordinates:
+      user_pool_id: "us-east-1_<pool-id>"  # placeholder
+      app_client_id: "<client-id>"  # placeholder
+      domain: "campaign-orchestrator.auth.us-east-1.amazoncognito.com"  # placeholder
+    auth_method: oidc-jwt
+    secret_ref: "agentic-campaign-orchestrator/cognito/app-client"  # placeholder
+    notes: "Subscription tiers as Cognito User Groups (observer, copilot, autopilot); OIDC/JWT for API auth"
+
+  - id: svc-008
+    name: AWS Amplify Hosting
+    service_type: amplify-hosting
+    coordinates:
+      app_id: "<amplify-app-id>"  # placeholder
+      default_domain: "<branch>.<app-id>.amplifyapp.com"  # placeholder
+    auth_method: iam-role
+    secret_ref: null
+    notes: "Static SPA zip-upload deploy; global CDN; auto-HTTPS; React + TypeScript + Vite frontend"
+
+  - id: svc-009
+    name: AWS Comprehend
+    service_type: comprehend
+    coordinates:
+      endpoint: "https://comprehend.us-east-1.amazonaws.com"
+    auth_method: iam-role
+    secret_ref: null
+    notes: "PII detection at RAG ingest boundary (brand guidelines doc ingestion pipeline)"

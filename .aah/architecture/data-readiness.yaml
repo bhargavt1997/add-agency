@@ -1,0 +1,87 @@
+# data-readiness.yaml — Design-Time Placeholders
+# gate_status: skipped — /aah-access not run; real coordinates to be filled after provisioning.
+
+gate_status: skipped
+skip_reason: "Design-time placeholders; to be validated via /aah-access before deployment"
+
+stores:
+
+  - id: store-001
+    name: Aurora Serverless PostgreSQL
+    type: relational
+    cloud_service_ref: svc-003
+    schema_status: greenfield
+    tables_planned:
+      - tenants
+      - campaigns
+      - ad_sets
+      - campaign_metrics_timeseries
+      - brand_rules
+      - action_log
+    isolation: row-level-security
+    isolation_column: tenant_id
+    notes: "Primary relational store; CPC/CTR/ROAS time-series aggregates; brand hard rules; RLS enforced"
+
+  - id: store-002
+    name: OpenSearch Serverless
+    type: vector
+    cloud_service_ref: svc-002
+    schema_status: greenfield
+    indices_planned:
+      - "tenant-{id}-brand-guidelines"
+    isolation: index-per-tenant
+    notes: "k-NN index for brand guidelines RAG; hybrid BM25+k-NN search; Titan Embeddings v2 (1536-dim)"
+
+  - id: store-003
+    name: DynamoDB — Session State
+    type: document
+    cloud_service_ref: svc-004
+    schema_status: greenfield
+    tables_planned:
+      - campaign-orchestrator-session-state
+    isolation: partition-key
+    isolation_key: "tenant_id#session_id"
+    notes: "LangGraph agent session state; ephemeral per-run context"
+
+  - id: store-004
+    name: DynamoDB — Action Audit (Immutable)
+    type: document
+    cloud_service_ref: svc-004
+    schema_status: greenfield
+    tables_planned:
+      - campaign-orchestrator-action-audit
+    isolation: partition-key
+    isolation_key: "tenant_id"
+    notes: "Append-only; SOC2 CC-SOC2-002 compliance; records action_type, trigger, agent_version, outcome, timestamp"
+
+  - id: store-005
+    name: DynamoDB — Human Confirmations
+    type: document
+    cloud_service_ref: svc-004
+    schema_status: greenfield
+    tables_planned:
+      - campaign-orchestrator-human-confirmations
+    isolation: partition-key
+    isolation_key: "tenant_id"
+    notes: "Approval queue records; approver_cognito_id, action_id, decision, timestamp; GDPR-erasable"
+
+  - id: store-006
+    name: DynamoDB — PII Audience (IAM-Gated)
+    type: document
+    cloud_service_ref: svc-004
+    schema_status: greenfield
+    tables_planned:
+      - campaign-orchestrator-pii-audience
+    isolation: partition-key
+    isolation_key: "tenant_id"
+    notes: "Audience identifiers segregated here; separate IAM policy; never included in RAG corpus; GDPR-erasable"
+
+  - id: store-007
+    name: Bedrock AgentCore Memory
+    type: agent-memory
+    cloud_service_ref: svc-005
+    schema_status: greenfield
+    memory_strategies:
+      - EPISODIC
+      - SEMANTIC
+    notes: "Cross-run campaign intervention memory; managed by AgentCore; no direct schema control"
