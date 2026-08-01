@@ -1,0 +1,17 @@
+{
+  "total_input_tokens": 155,
+  "total_output_tokens": 79408,
+  "total_cache_read_tokens": 8158082,
+  "total_cache_creation_tokens": 187236,
+  "total_all_tokens": 79563,
+  "session_count": 1,
+  "sessions": [
+    {
+      "timestamp": "2026-08-01T22:24:03.550383+00:00",
+      "input_tokens": 155,
+      "output_tokens": 79408,
+      "total_tokens": 79563
+    }
+  ],
+  "updated_at": "2026-08-01T22:24:03.550388+00:00"
+}

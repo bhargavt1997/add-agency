@@ -1,0 +1,26 @@
+project_name: agentic-campaign-orchestrator
+project_type: brownfield
+current_phase: discuss
+complexity_tier: null
+completed_artifacts: []
+stack_choices: {}
+features:
+  verification_profiles_v1: report_only
+  runtime_profile_v1: report_only
+  runtime_cloud_probes_v1: false
+  semantic_smoke_v2: false
+  isolated_test_env_v1: false
+dag_state: null
+current_iteration: 1
+branching_config:
+  main_branch: main
+  develop_branch: develop
+  integration_prefix: integration/wave-
+industry_domain_path: null
+last_session_summary: null
+execution_mode: aah_root
+delegated_to: null
+delegation_timestamp: null
+synthesis_mode: null
+created_at: '2026-08-01T22:03:26.709312+00:00'
+updated_at: '2026-08-01T22:06:48.661015+00:00'

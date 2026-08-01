@@ -1,0 +1,176 @@
+schema_version: '1.0'
+project: agentic-campaign-orchestrator
+complexity: mvp
+archetype: ai-applications
+domain_ids: []
+archetypes:
+- ai-applications
+- aws-native-services
+- ai-infra-platforms
+started_at: '2026-08-02'
+pre_resolved:
+- slug_id: backend-language
+  value: python
+  source: user
+  locked: true
+  activates: []
+  notes: 'source-detail: knowledge/project-brief.md · User selected Python stack at
+    project init; ideal for AI/agent workloads'
+- slug_id: cloud-vs-local
+  value: cloud
+  source: inferred
+  locked: true
+  activates: []
+  notes: 'source-detail: knowledge/project-brief.md · brief: ''build to scale and
+    monetise'' — cloud is the only viable path for a SaaS product'
+- slug_id: data-storage-present
+  value: 'yes'
+  source: inferred
+  locked: true
+  activates: []
+  notes: 'source-detail: knowledge/project-brief.md · brief: campaign performance
+    data, brand guidelines, vector store for RAG all require persistent storage'
+- slug_id: monetisation-model
+  value: saas-subscription-tiers
+  source: user
+  locked: true
+  activates: []
+  notes: 'source-detail: knowledge/project-brief.md · user confirmed SaaS subscription
+    tiers during discuss intake'
+- slug_id: core-agent-pattern
+  value: rag-plus-mcp
+  source: inferred
+  locked: true
+  activates: []
+  notes: 'source-detail: knowledge/project-brief.md · brief explicitly states RAG
+    reasoning engine + MCP servers as core architecture'
+decisions:
+- slug_id: cloud-provider
+  area: Infrastructure
+  question: Which cloud provider?
+  options_presented:
+  - aws
+  options_eliminated: []
+  response: aws
+  response_type: single-select
+  source: inferred
+  activates: []
+  notes: AWS is the only AAH-supported provider currently; user confirmed cloud deployment
+- slug_id: custom-ui-required
+  area: UI/UX
+  question: Does this system need a custom user interface?
+  options_presented:
+  - 'yes'
+  - 'no'
+  options_eliminated: []
+  response: 'yes'
+  response_type: single-select
+  source: user
+  activates:
+  - ACT-UX
+  notes: Marketing managers need campaign dashboard, autonomous action log, and guardrail
+    settings
+- slug_id: compliance-regimes
+  area: Security & Compliance
+  question: Which compliance regimes apply?
+  options_presented:
+  - soc2
+  - gdpr
+  - none
+  - pci-dss
+  options_eliminated: []
+  response:
+  - soc2
+  - gdpr
+  response_type: multi-select
+  source: user
+  activates: []
+  notes: SOC2 for enterprise/agency clients; GDPR for EU ad data processing
+- slug_id: docker-installed
+  area: Infrastructure
+  question: Do you have Docker installed?
+  options_presented:
+  - 'yes'
+  - 'no'
+  options_eliminated: []
+  response: 'yes'
+  response_type: single-select
+  source: user
+  activates: []
+  notes: Docker available for local development and testing
+- slug_id: development-methodology
+  area: Infrastructure
+  question: How will your team develop across local and cloud environments?
+  options_presented:
+  - local-cloud-ready
+  - full-integrated-cloud
+  options_eliminated: []
+  response: local-cloud-ready
+  response_type: single-select
+  source: user
+  activates: []
+  notes: Develop locally with cloud adapters, deploy to AWS when ready
+- slug_id: business-domain
+  area: Domain & Archetype
+  question: Which business domain(s) does this project target?
+  options_presented:
+  - financial-services
+  options_eliminated: []
+  response: none-matched
+  response_type: free-text
+  source: user
+  activates: []
+  notes: No matching harness domain brief for ad-tech/marketing-automation; taxonomy
+    is financial-services focused
+- slug_id: technical-archetype
+  area: Domain & Archetype
+  question: Which technical archetype(s) apply?
+  options_presented:
+  - ai-applications
+  - aws-native-services
+  - ai-infra-platforms
+  options_eliminated: []
+  response:
+  - ai-applications
+  - aws-native-services
+  - ai-infra-platforms
+  response_type: multi-select
+  source: user
+  activates: []
+  notes: RAG+agentic app on AWS with MCP infrastructure layer
+deferred_ideas: []
+constraint_audit:
+  passed: null
+  violations: []
+active_references:
+  computed_at: '2026-08-02'
+  guidance_references:
+  - source: https://docs.aws.amazon.com/bedrock-agentcore/latest/devguide/what-is-bedrock-agentcore.html
+    kind: url
+    exists: true
+    activated_by:
+    - slug_id: cloud-provider
+      value: aws
+  - source: https://docs.aws.amazon.com/whitepapers/latest/aws-overview/machine-learning.html
+    kind: url
+    exists: true
+    activated_by:
+    - slug_id: cloud-provider
+      value: aws
+  - source: _resources/_references/discuss/compliance/soc2.yaml
+    kind: file
+    exists: true
+    activated_by:
+    - slug_id: compliance-regimes
+      value: soc2
+  - source: _resources/_references/discuss/compliance/gdpr.yaml
+    kind: file
+    exists: true
+    activated_by:
+    - slug_id: compliance-regimes
+      value: gdpr
+  domain_brief_paths: []
+  archetype_playbook_paths:
+  - build-playbooks/ai-applications/build-playbook.yaml
+  - build-playbooks/aws-native-services/build-playbook.yaml
+  - build-playbooks/ai-infra-platforms/build-playbook.yaml

@@ -1,0 +1,40 @@
+raw_statement: >
+  Autonomous digital media buyer agent (Agentic Campaign Orchestrator) that monitors
+  active ad campaigns, detects high CPC conditions, and autonomously takes corrective
+  actions — reallocating budgets to better-performing channels or pausing failing ads.
+  Uses a RAG reasoning engine backed by past campaign performance data and brand
+  guidelines. MCP servers interface with mock ad network APIs (Google Ads, Meta) to
+  safely execute actions on external systems. Goal is to build to scale and monetise.
+
+target_areas:
+  - agentic_ai_orchestration
+  - rag_retrieval_reasoning
+  - mcp_server_integrations
+  - ad_network_api_integrations
+  - campaign_performance_data
+  - brand_guidelines_ingestion
+  - autonomous_budget_management
+  - scalability_architecture
+  - monetisation_model
+
+constraints:
+  - Mock ad network APIs only (no live Google Ads / Meta accounts required for MVP)
+  - Autonomous actions must have safety guardrails (human-in-the-loop escalation paths)
+  - RAG context must include historical campaign data and brand guidelines
+  - Architecture must be designed for scale and eventual monetisation
+
+technical_domains:
+  - ml_ai_agents
+  - retrieval_augmented_generation
+  - mcp_protocol
+  - rest_api_integration
+  - data_pipeline
+  - backend_services
+
+integration_surface: 4  # Google Ads mock API, Meta mock API, vector store, campaign data store
+process_flow: campaign_monitor -> cpc_detect -> rag_context_pull -> decision_engine -> action_execute
+end_users:
+  - marketing_managers
+  - media_buyers
+  - campaign_analysts
+  - platform_subscribers  # monetisation angle
