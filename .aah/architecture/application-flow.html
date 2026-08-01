@@ -1,0 +1,629 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Application Flow — Agentic Campaign Orchestrator</title>
+<link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@300;400;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --dl-green: #86BC25;
+  --dl-neon-green: #86EB22;
+  --dl-blue: #00A3E0;
+  --dl-dark-gray: #282728;
+  --dl-gray: #E6E6E6;
+  --dl-text: #282728;
+  --dl-text-secondary: #555;
+  --dl-white: #FFFFFF;
+  --dl-bg: #f8f8f8;
+  --dl-surface: #FFFFFF;
+  --dl-border: #E0E0E0;
+  --dl-code-bg: #1e1e1e;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: 'Open Sans', sans-serif;
+  font-size: 15px;
+  line-height: 1.7;
+  color: var(--dl-text);
+  background: var(--dl-bg);
+}
+/* Header */
+.site-header {
+  background: var(--dl-dark-gray);
+  padding: 0 32px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 72px;
+  position: relative;
+  overflow: hidden;
+}
+.site-header::before {
+  content: '';
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  width: 4px;
+  background: var(--dl-green);
+}
+.header-left {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.header-project {
+  font-size: 11px;
+  font-weight: 300;
+  color: rgba(255,255,255,0.6);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.header-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--dl-white);
+}
+.header-motif {
+  position: absolute;
+  right: 0;
+  top: 0;
+  width: 100px;
+  height: 100%;
+  overflow: hidden;
+  opacity: 0.18;
+}
+/* Green accent bar */
+.accent-bar {
+  height: 4px;
+  background: var(--dl-green);
+  width: 100%;
+}
+/* Navigation */
+.site-nav {
+  background: var(--dl-dark-gray);
+  border-top: 1px solid rgba(255,255,255,0.08);
+  padding: 0 32px;
+  display: flex;
+  gap: 0;
+  overflow-x: auto;
+}
+.site-nav a {
+  display: block;
+  padding: 12px 16px;
+  font-size: 12px;
+  font-weight: 600;
+  color: rgba(255,255,255,0.55);
+  text-decoration: none;
+  white-space: nowrap;
+  border-bottom: 3px solid transparent;
+  transition: color 0.15s, border-color 0.15s;
+  letter-spacing: 0.02em;
+}
+.site-nav a:hover {
+  color: var(--dl-white);
+}
+.site-nav a.nav-active {
+  color: var(--dl-green);
+  border-bottom-color: var(--dl-green);
+}
+/* Main content */
+.content-wrap {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 40px 32px 80px;
+}
+/* Rendered markdown styles */
+#content h1 {
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--dl-dark-gray);
+  margin-bottom: 4px;
+  padding-bottom: 12px;
+  border-bottom: 2px solid var(--dl-green);
+}
+#content h2 {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--dl-dark-gray);
+  margin-top: 40px;
+  margin-bottom: 14px;
+  padding-left: 14px;
+  border-left: 4px solid var(--dl-green);
+}
+#content h3 {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--dl-dark-gray);
+  margin-top: 28px;
+  margin-bottom: 10px;
+  padding-left: 10px;
+  border-left: 3px solid var(--dl-gray);
+}
+#content h4 {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--dl-text-secondary);
+  margin-top: 20px;
+  margin-bottom: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+#content p {
+  margin-bottom: 14px;
+  color: var(--dl-text);
+}
+#content a { color: var(--dl-blue); text-decoration: none; }
+#content a:hover { text-decoration: underline; }
+#content ul, #content ol {
+  margin: 10px 0 14px 24px;
+}
+#content li { margin-bottom: 5px; }
+#content strong { font-weight: 700; }
+#content em { font-style: italic; }
+#content hr {
+  border: none;
+  border-top: 1px solid var(--dl-border);
+  margin: 32px 0;
+}
+/* Tables */
+#content table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 20px 0;
+  font-size: 13.5px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.07);
+  border-radius: 6px;
+  overflow: hidden;
+}
+#content thead tr {
+  background: var(--dl-dark-gray);
+  color: var(--dl-white);
+}
+#content thead th {
+  padding: 11px 14px;
+  text-align: left;
+  font-weight: 600;
+  font-size: 12px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+#content tbody tr {
+  border-bottom: 1px solid var(--dl-border);
+}
+#content tbody tr:nth-child(even) {
+  background: #f4f9ee;
+}
+#content tbody tr:hover {
+  background: #eef7e1;
+}
+#content td {
+  padding: 10px 14px;
+  vertical-align: top;
+}
+/* Code blocks */
+#content pre {
+  background: var(--dl-code-bg);
+  color: #d4d4d4;
+  border-radius: 6px;
+  padding: 18px 20px;
+  overflow-x: auto;
+  font-size: 13px;
+  line-height: 1.6;
+  margin: 16px 0;
+  border-left: 3px solid var(--dl-green);
+}
+#content code {
+  font-family: 'Cascadia Code', 'Fira Code', 'Consolas', monospace;
+  font-size: 0.88em;
+}
+#content p code, #content li code, #content td code {
+  background: #f0f0f0;
+  color: #c7254e;
+  padding: 1px 5px;
+  border-radius: 3px;
+  font-size: 0.87em;
+}
+#content pre code {
+  background: none;
+  color: inherit;
+  padding: 0;
+  border-radius: 0;
+  font-size: inherit;
+}
+/* Blockquotes */
+#content blockquote {
+  border-left: 4px solid var(--dl-green);
+  padding: 10px 16px;
+  margin: 16px 0;
+  background: #f4f9ee;
+  color: var(--dl-text-secondary);
+  border-radius: 0 4px 4px 0;
+}
+/* Footer */
+.site-footer {
+  border-top: 1px solid var(--dl-border);
+  padding: 20px 32px;
+  text-align: right;
+  font-size: 11px;
+  color: #999;
+  background: var(--dl-white);
+  max-width: 1100px;
+  margin: 0 auto;
+}
+/* Phase badge */
+.phase-meta {
+  display: inline-flex;
+  gap: 12px;
+  margin-bottom: 28px;
+  flex-wrap: wrap;
+}
+.phase-badge {
+  background: var(--dl-green);
+  color: var(--dl-white);
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 12px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+</style>
+</head>
+<body>
+<header class="site-header">
+  <div class="header-left">
+    <span class="header-project">Agentic Campaign Orchestrator · Architecture Phase</span>
+    <span class="header-title">Application Flow</span>
+  </div>
+  <svg class="header-motif" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <circle cx="80" cy="50" r="70" stroke="#86BC25" stroke-width="2" fill="none"/>
+    <circle cx="80" cy="50" r="45" stroke="#86BC25" stroke-width="1.5" fill="none"/>
+  </svg>
+</header>
+<div class="accent-bar"></div>
+<nav class="site-nav">
+<a href="./agent-topology.html" >Agent Topology</a>
+<a href="./architecture-overview.html" >Architecture Overview</a>
+<a href="./data-model.html" >Data Model</a>
+<a href="./application-flow.html" class="nav-active">Application Flow</a>
+<a href="./api-interface-contract.html" >API Interface Contract</a>
+<a href="./risk-security-compliance.html" >Risk & Security</a>
+</nav>
+<div class="content-wrap">
+  <div id="content"></div>
+</div>
+<div class="site-footer">
+  Confidential — Architecture Phase, Iteration 1 &nbsp;·&nbsp; 2026-08-02 &nbsp;·&nbsp; Deloitte
+</div>
+<script type="text/plain" id="md">
+# Application Flow
+## Agentic Campaign Orchestrator
+
+**Phase:** architecture · **Iteration:** 1 · **Authored:** 2026-08-02  
+**Inputs:** `decision-registry.yaml`, `discuss-prd.md`, `module-map.yaml`, `agent-topology.md`
+
+---
+
+## 1. Overview
+
+This document describes the end-to-end event flows for all five demoable modules (MOD-001–MOD-005). Each flow is traced from the originating trigger through every system boundary to the final state change or user-visible outcome.
+
+---
+
+## 2. Flow 1 — CPC Breach Detection (MOD-001)
+
+**Trigger:** Scheduled poll cycle (60-second interval) in Monitor agent  
+**End state:** Breach event written to `CampaignOrchestratorState.breach_events`; Aurora metrics updated
+
+```
+Monitor Agent (LangGraph node — fast LLM)
+│
+│ 1. MCP call: get_campaign_performance(campaign_id, "last_7_days")
+│    → FastMCP Google Ads MCP server (port 8001) OR Meta MCP server (port 8002)
+│    ← CampaignPerformanceResponse { cpc, ctr, roas, impressions, clicks, spend }
+│
+│ 2. Aurora write: UPSERT campaign_metrics_timeseries
+│    (tenant_id, ad_set_id, ts, cpc, ctr, roas, ...)
+│
+│ 3. Aurora query: 7-day rolling baseline
+│    SELECT AVG(cpc) AS baseline FROM campaign_metrics_timeseries
+│    WHERE tenant_id=$1 AND ad_set_id=$2 AND ts > now()-INTERVAL '7 days'
+│
+│ 4. Breach check: current_cpc > baseline_cpc * 1.20?
+│    YES → append BreachEvent to state.breach_events
+│         → AgentCore emits: RUN_STARTED event (AG-UI SSE)
+│    NO  → poll_wait_node → sleep 60s → repeat
+│
+└─ State updated: breach_events, campaign_metrics, cpc_baselines
+```
+
+**Observability:** AgentCore `RUN_STARTED` event visible in React dashboard agent event stream.
+
+---
+
+## 3. Flow 2 — RAG Context Retrieval (MOD-002)
+
+**Trigger:** Breach event in state (output of Flow 1)  
+**End state:** `CampaignOrchestratorState.retrieved_context` populated
+
+```
+retrieve_context_node (deterministic — no LLM)
+│
+├─ A. OpenSearch hybrid retrieval
+│   │
+│   │ 1. Encode breach description with Titan Text Embeddings v2
+│   │    Input: "CPC spike on ad_set {id}: current={cpc}, baseline={baseline}, delta={pct}%"
+│   │    Output: 1536-dim float vector
+│   │
+│   │ 2. Hybrid BM25 + k-NN query → tenant-{id}-brand-guidelines index
+│   │    Returns: top-5 brand guideline chunks (content, score)
+│   │
+│   └─ state.retrieved_context.brand_guidelines = [chunk_1, ..., chunk_5]
+│
+├─ B. Aurora SQL aggregation
+│   │
+│   │ SELECT ad_set_id, AVG(cpc) 7d_avg, AVG(ctr), AVG(roas), SUM(spend)
+│   │ FROM campaign_metrics_timeseries
+│   │ WHERE tenant_id=$1 AND ad_set_id IN ($breach_adsets)
+│   │   AND ts > now() - INTERVAL '7 days'
+│   │ GROUP BY ad_set_id
+│   │
+│   └─ state.retrieved_context.metrics_summary = formatted SQL result
+│
+├─ C. Aurora hard rules lookup
+│   │
+│   │ SELECT rule_type, rule_key, rule_value FROM brand_rules
+│   │ WHERE tenant_id=$1 AND active=TRUE
+│   │
+│   └─ state.retrieved_context.hard_rules = [rule_1, ..., rule_N]
+│
+└─ D. AgentCore Memory retrieval
+    │
+    │ EPISODIC: query past interventions for this ad_set_id
+    │ SEMANTIC: query patterns matching "CPC spike {network} {ad_format}"
+    │
+    └─ state.retrieved_context.past_interventions = [episode_1, ..., episode_3]
+```
+
+**AgentCore events emitted:** `TOOL_CALL_START` + `TOOL_CALL_END` for each retrieval tool.
+
+---
+
+## 4. Flow 3 — Autonomous Decision Generation (MOD-002)
+
+**Trigger:** `retrieved_context` populated  
+**End state:** `CampaignOrchestratorState.decision` (typed Decision JSON)
+
+```
+reason_node (full LLM — Claude or GPT)
+│
+│ 1. Build prompt:
+│    System: "You are an autonomous digital media buyer..."
+│    Context: breach_event + metrics_summary + brand_guidelines + hard_rules + past_interventions
+│    Instruction: "Select ONE action. Output valid JSON Decision object."
+│
+│ 2. Bedrock Guardrails applied at LLM inference
+│    (PII redaction, denied topics, content thresholds)
+│    Bedrock prompt cache: system context cached (20-50% token savings)
+│
+│ 3. LLM response (JSON mode / function calling)
+│    Returns: Decision { action, target_ad_set_id, amount_usd?, bid_cap?, rationale, spend_delta }
+│
+│ 4. Pydantic validation: enforce Decision TypedDict schema
+│    Invalid → retry with clarification prompt (max 2 retries)
+│
+└─ state.decision = Decision object; state.reasoning_trace = chain-of-thought
+```
+
+---
+
+## 5. Flow 4 — Guardrail Gate + Action Execution (MOD-003)
+
+**Trigger:** `decision` populated  
+**End state:** Action executed (MCP) or queued (DynamoDB); audit record written
+
+```
+guardrail_check_node (deterministic)
+│
+├─ spend_delta > $500 → requires_approval = True
+├─ action == "pause_ad_set" + targets entire campaign → requires_approval = True
+├─ brand keyword in target ad_set creative → requires_approval = True
+└─ Bedrock Guardrails content check on decision rationale
+│
+│
+┌──────────────┴──────────────┐
+│ requires_approval = False   │ requires_approval = True
+▼                             ▼
+act_node                      enqueue_confirmation_node
+│                             │
+│ MCP tool execution:         │ DynamoDB PUT: human-confirmations
+│ await mcp_client.call_tool( │   {confirmation_id, action_payload,
+│   name=decision.action,     │    spend_delta, trigger_reason, status=pending}
+│   arguments={...}           │
+│ )                           │ → FastAPI pushes AG-UI STATE_SNAPSHOT event
+│                             │ → Co-Pilot queue card appears in React UI
+│ ActionResponse {success,    │
+│   execution_id}             │ [Human approves/rejects in UI]
+│                             │   POST /api/v1/confirmations/{id}/approve
+│                             │   → DynamoDB UPDATE: approver_id, status, decision_at
+│                             │   → act_node resumes with approved decision
+│                             │
+▼                             ▼
+audit_write_node              audit_write_node
+│                             │
+│ DynamoDB PUT (append-only): action-audit table
+│ {action_id, action_type, ad_set_id, trigger_cpc, baseline_cpc, decision_json,
+│  status, approver_id (if applicable), agent_version, executed_at}
+│
+│ Aurora INSERT: action_log (SQL mirror)
+│
+▼
+memory_write_node
+│
+│ AgentCore EPISODIC write:
+│   {breach_event, decision, outcome, cpc_before, cpc_after (polled 5min later)}
+│
+└─ AgentCore emits: RUN_FINISHED event (AG-UI SSE)
+```
+
+---
+
+## 6. Flow 5 — Dashboard Real-Time Updates (MOD-004)
+
+**Trigger:** Browser opens dashboard or agent run starts  
+**End state:** UI shows live metrics + agent events
+
+```
+Browser (React EventSource)
+│
+├─ Campaign Metrics Stream
+│   GET /api/v1/stream/metrics
+│   FastAPI SSE endpoint (text/event-stream)
+│   │
+│   │ Every 30s: Aurora SELECT latest metrics per ad_set for tenant
+│   │ Emits: data: {"ad_set_id": ..., "cpc": ..., "ctr": ..., "ts": ...}
+│   │
+│   └─ React: updates CPC/CTR/ROAS panels; highlights breach ad_sets
+│
+└─ Agent Event Stream
+    GET /api/v1/stream/agent-events
+    FastAPI SSE proxy (bridges AgentCore AG-UI SSE → browser)
+    │
+    │ AgentCore → FastAPI proxy → browser EventSource
+    │ Events: RUN_STARTED, TOOL_CALL_START, TOOL_CALL_END, STATE_SNAPSHOT, RUN_FINISHED
+    │
+    └─ React: shows live agent trace in event panel
+```
+
+**Co-Pilot Approval Flow (MOD-004 — Co-Pilot tier only):**
+```
+1. enqueue_confirmation_node writes to DynamoDB
+2. AgentCore emits STATE_SNAPSHOT (includes confirmation_id)
+3. React picks up STATE_SNAPSHOT from agent event stream
+4. React fetches GET /api/v1/confirmations → pending queue
+5. Action queue card appears (action type, reasoning, projected spend delta)
+6. User clicks Approve/Reject
+7. POST /api/v1/confirmations/{id}/approve
+   FastAPI: Cognito JWT auth → extract cognito_sub → tier check (copilot or autopilot)
+   DynamoDB UPDATE: status=approved, approver_id=cognito_sub, decision_at=now()
+   FastAPI: re-enqueues approved decision to act_node
+8. act_node executes → audit_write_node logs approver_id
+9. React: confirmation card moves to completed; appears in audit log
+```
+
+---
+
+## 7. Flow 6 — Brand Guidelines Ingest (MOD-005)
+
+**Trigger:** User uploads brand guidelines document via dashboard  
+**End state:** Chunks indexed in OpenSearch; PII-clean guarantee
+
+```
+Browser
+│ POST /api/v1/brand-guidelines/ingest (multipart/form-data)
+│ Cognito JWT auth: copilot or autopilot tier required
+│
+FastAPI
+│
+│ 1. AWS Comprehend PII detection on document text
+│    If PII detected → 422 Unprocessable Entity (block ingest)
+│
+│ 2. Document chunking (512-token chunks, 64-token overlap)
+│
+│ 3. For each chunk:
+│    a. Amazon Titan Text Embeddings v2 → 1536-dim vector
+│    b. OpenSearch upsert → tenant-{id}-brand-guidelines index
+│
+│ 4. Aurora INSERT: brand_rules table (structured rule extraction from doc)
+│
+└─ 200 OK: {chunks_indexed: N, rules_extracted: M}
+```
+
+---
+
+## 8. Flow 7 — GDPR Erasure (MOD-005)
+
+**Trigger:** User or API request to erase tenant data  
+**End state:** All tenant data soft-deleted; hard-delete scheduled at 30 days
+
+```
+DELETE /api/v1/tenants/{id}/gdpr-erasure
+Cognito JWT auth: tenant admin role required
+│
+FastAPI
+│
+│ 1. Aurora: UPDATE tenants SET deleted_at=now() WHERE id=$tenant_id
+│            UPDATE campaigns SET deleted_at=now() WHERE tenant_id=$1
+│            UPDATE ad_sets SET deleted_at=now() WHERE tenant_id=$1
+│            UPDATE action_log SET deleted_at=now() WHERE tenant_id=$1
+│            (brand_rules, campaign_metrics_timeseries: soft-delete similarly)
+│
+│ 2. DynamoDB: mark all items in human-confirmations + pii-audience with deleted_at
+│    TTL attribute set to now() + 30 days → DynamoDB auto-hard-deletes
+│
+│ 3. DynamoDB action-audit: immutable — cannot delete. Log erasure request itself.
+│    (SOC2 requirement: audit log is permanent)
+│
+│ 4. OpenSearch: DELETE by query on tenant-{id}-brand-guidelines index
+│
+│ 5. AgentCore Memory: invalidate all sessions/memories for tenant_id
+│
+└─ 200 OK: {status: "erasure_initiated", hard_delete_at: "<ISO timestamp + 30d>"}
+```
+
+---
+
+## 9. Flow 8 — Subscription Tier Gating (all tiers, MOD-005)
+
+**Trigger:** Any API request  
+**End state:** Request allowed (correct tier) or 403 Forbidden (wrong tier)
+
+```
+Browser request + Cognito JWT
+│
+FastAPI Cognito JWT middleware
+│ 1. Verify JWT signature (Cognito JWKS)
+│ 2. Extract: cognito:groups claim → tier (observer/copilot/autopilot)
+│ 3. Set: request.state.tenant_id, request.state.tier
+│
+Tier enforcement dependency (FastAPI Depends)
+│ 4. Check endpoint's required tier >= request.state.tier
+│    Example: POST /confirmations/{id}/approve requires_tier = "copilot"
+│
+│ IF tier insufficient: return 403 Forbidden
+│ 5. Log access decision to CloudWatch:
+│    {endpoint, method, tenant_id, tier, allowed: bool, ts}
+│
+└─ Proceed to endpoint handler (if allowed)
+
+Client UX (parallel, client-side):
+│ JWT decoded in React → group claim → client-side tier check
+│ Approve button hidden for observer tier (UX only — server is authoritative)
+```
+
+---
+
+## 10. Provenance
+
+| Section | Origin | Source |
+|---|---|---|
+| 1. Overview | Inherited | `discuss-prd.md §4`, `module-map.yaml` |
+| 2. Flow 1 — CPC Breach Detection | Inherited + Authored | `decision-registry.yaml → cpc-threshold-method`, `decision-registry.yaml → cpc-spike-threshold-pct`, `decision-registry.yaml → mcp-tool-definitions`; sequence authored |
+| 3. Flow 2 — RAG Retrieval | Inherited + Authored | `decision-registry.yaml → rag-data-model-strategy`, `decision-registry.yaml → vector-db-choice`, `decision-registry.yaml → embedding-model`, `agent-topology.md §3.2`; sequence authored |
+| 4. Flow 3 — Decision Generation | Inherited + Authored | `decision-registry.yaml → llm-choice`, `decision-registry.yaml → orchestration-pattern`, `agent-topology.md §3.3` |
+| 5. Flow 4 — Guardrail Gate + Execution | Inherited + Authored | `decision-registry.yaml → spend-delta-approval-threshold`, `decision-registry.yaml → campaign-pause-requires-approval`, `decision-registry.yaml → autonomous-action-scope`, `agent-topology.md §3.4`, `agent-topology.md §3.5` |
+| 6. Flow 5 — Dashboard Real-Time | Inherited + Authored | `decision-registry.yaml → notification-design`, `decision-registry.yaml → action-log-design`, `decision-registry.yaml → copilot-approval-ux`; sequence authored |
+| 7. Flow 6 — Brand Guidelines Ingest | Inherited + Authored | `decision-registry.yaml → brand-guidelines-ingestion`, `decision-registry.yaml → data-privacy-controls`; Comprehend gate authored |
+| 8. Flow 7 — GDPR Erasure | Inherited + Authored | `decision-registry.yaml → gdpr-erasure-strategy`, `decision-registry.yaml → pii-handling-strategy`; store-by-store erasure sequence authored |
+| 9. Flow 8 — Tier Gating | Inherited + Authored | `decision-registry.yaml → tier-gating-pattern`, `decision-registry.yaml → auth-strategy`; JWT flow authored |
+
+</script>
+<script src="https://cdn.jsdelivr.net/npm/marked@12/marked.min.js"></script>
+<script>
+(function() {
+  var md = document.getElementById('md').textContent;
+  document.getElementById('content').innerHTML = marked.parse(md);
+})();
+</script>
+</body>
+</html>

@@ -381,12 +381,17 @@ decisions:
   - bedrock-agentcore-mcp-gateway
   - custom-python-stdio
   options_eliminated: []
-  response: fastmcp-http-sse
+  response: fastmcp-streamable-http
   response_type: single-select
-  source: user
+  source: inferred
   activates: []
   notes: FastMCP with HTTP/SSE transport — declarative tool definitions, works with
     AgentCore MCP gateway, clean mock/real switching
+  revised_from:
+  - response: fastmcp-http-sse
+    revised_at: '2026-08-02'
+    reason: MCP SSE transport deprecated in 2025-03-26 spec; streamable-http required
+      for AgentCore MCP runtime; mcp.run() must be at module level not in __name__==__main__
 - slug_id: mcp-server-topology
   area: MCP Server Design & Integrations
   question: How many MCP servers are deployed?
@@ -718,6 +723,47 @@ decisions:
   activates: []
   notes: AG-UI SSE for agent action events (typed TOOL_CALL_START/END); plain FastAPI
     SSE for campaign metrics
+- slug_id: guardrail-rules
+  area: Agent AI / Guardrails
+  question: What guardrail enforcement pattern should protect every agent action before
+    it reaches the ad-network API?
+  options_presented: []
+  options_eliminated: []
+  response: layered-all-three
+  response_type: single-select
+  source: inferred
+  activates: []
+  notes: Bedrock Guardrails (LLM output PII/safety) + deterministic code layer (spend-delta,
+    campaign-count) + AgentCore Policy Cedar gate (identity-aware tool-call boundary
+    enforcement, CloudWatch audit per CC-SOC2-002). All three serve distinct non-overlapping
+    purposes.
+- slug_id: mock-api-contract-design
+  area: MCP / Mock APIs
+  question: How should the mock Google Ads and Meta API servers be designed?
+  options_presented: []
+  options_eliminated: []
+  response: fastapi-stateful-mock
+  response_type: single-select
+  source: inferred
+  activates: []
+  notes: Stateful FastAPI mock with mutable campaign state — budgets, CPC, status
+    mutate per tool call. POST /admin/seed + /admin/reset for deterministic test setup.
+    Required for meaningful regression suite; static mocks let agent pass tests without
+    actually calling correct tools.
+- slug_id: ad-network-auth-pattern
+  area: MCP / Mock APIs
+  question: What auth pattern for inbound calls from orchestrator agent and outbound
+    calls to mock ad APIs?
+  options_presented: []
+  options_eliminated: []
+  response: sigv4-inbound-apikey-secrets-outbound
+  response_type: single-select
+  source: inferred
+  activates: []
+  notes: 'SigV4+IAM (automatic via AgentCore) for inbound; Secrets Manager API key
+    for outbound. CRITICAL: never use request headers for auth inside AgentCore container
+    — AgentCore strips custom headers; credentials must come from env/Secrets Manager
+    only.'
 deferred_ideas: []
 constraint_audit:
   passed: null

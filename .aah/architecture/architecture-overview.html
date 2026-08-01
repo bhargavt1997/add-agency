@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Architecture Overview — Agentic Campaign Orchestrator</title>
+<link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@300;400;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --dl-green: #86BC25;
+  --dl-neon-green: #86EB22;
+  --dl-blue: #00A3E0;
+  --dl-dark-gray: #282728;
+  --dl-gray: #E6E6E6;
+  --dl-text: #282728;
+  --dl-text-secondary: #555;
+  --dl-white: #FFFFFF;
+  --dl-bg: #f8f8f8;
+  --dl-surface: #FFFFFF;
+  --dl-border: #E0E0E0;
+  --dl-code-bg: #1e1e1e;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: 'Open Sans', sans-serif;
+  font-size: 15px;
+  line-height: 1.7;
+  color: var(--dl-text);
+  background: var(--dl-bg);
+}
+/* Header */
+.site-header {
+  background: var(--dl-dark-gray);
+  padding: 0 32px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 72px;
+  position: relative;
+  overflow: hidden;
+}
+.site-header::before {
+  content: '';
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  width: 4px;
+  background: var(--dl-green);
+}
+.header-left {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.header-project {
+  font-size: 11px;
+  font-weight: 300;
+  color: rgba(255,255,255,0.6);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.header-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--dl-white);
+}
+.header-motif {
+  position: absolute;
+  right: 0;
+  top: 0;
+  width: 100px;
+  height: 100%;
+  overflow: hidden;
+  opacity: 0.18;
+}
+/* Green accent bar */
+.accent-bar {
+  height: 4px;
+  background: var(--dl-green);
+  width: 100%;
+}
+/* Navigation */
+.site-nav {
+  background: var(--dl-dark-gray);
+  border-top: 1px solid rgba(255,255,255,0.08);
+  padding: 0 32px;
+  display: flex;
+  gap: 0;
+  overflow-x: auto;
+}
+.site-nav a {
+  display: block;
+  padding: 12px 16px;
+  font-size: 12px;
+  font-weight: 600;
+  color: rgba(255,255,255,0.55);
+  text-decoration: none;
+  white-space: nowrap;
+  border-bottom: 3px solid transparent;
+  transition: color 0.15s, border-color 0.15s;
+  letter-spacing: 0.02em;
+}
+.site-nav a:hover {
+  color: var(--dl-white);
+}
+.site-nav a.nav-active {
+  color: var(--dl-green);
+  border-bottom-color: var(--dl-green);
+}
+/* Main content */
+.content-wrap {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 40px 32px 80px;
+}
+/* Rendered markdown styles */
+#content h1 {
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--dl-dark-gray);
+  margin-bottom: 4px;
+  padding-bottom: 12px;
+  border-bottom: 2px solid var(--dl-green);
+}
+#content h2 {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--dl-dark-gray);
+  margin-top: 40px;
+  margin-bottom: 14px;
+  padding-left: 14px;
+  border-left: 4px solid var(--dl-green);
+}
+#content h3 {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--dl-dark-gray);
+  margin-top: 28px;
+  margin-bottom: 10px;
+  padding-left: 10px;
+  border-left: 3px solid var(--dl-gray);
+}
+#content h4 {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--dl-text-secondary);
+  margin-top: 20px;
+  margin-bottom: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+#content p {
+  margin-bottom: 14px;
+  color: var(--dl-text);
+}
+#content a { color: var(--dl-blue); text-decoration: none; }
+#content a:hover { text-decoration: underline; }
+#content ul, #content ol {
+  margin: 10px 0 14px 24px;
+}
+#content li { margin-bottom: 5px; }
+#content strong { font-weight: 700; }
+#content em { font-style: italic; }
+#content hr {
+  border: none;
+  border-top: 1px solid var(--dl-border);
+  margin: 32px 0;
+}
+/* Tables */
+#content table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 20px 0;
+  font-size: 13.5px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.07);
+  border-radius: 6px;
+  overflow: hidden;
+}
+#content thead tr {
+  background: var(--dl-dark-gray);
+  color: var(--dl-white);
+}
+#content thead th {
+  padding: 11px 14px;
+  text-align: left;
+  font-weight: 600;
+  font-size: 12px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+#content tbody tr {
+  border-bottom: 1px solid var(--dl-border);
+}
+#content tbody tr:nth-child(even) {
+  background: #f4f9ee;
+}
+#content tbody tr:hover {
+  background: #eef7e1;
+}
+#content td {
+  padding: 10px 14px;
+  vertical-align: top;
+}
+/* Code blocks */
+#content pre {
+  background: var(--dl-code-bg);
+  color: #d4d4d4;
+  border-radius: 6px;
+  padding: 18px 20px;
+  overflow-x: auto;
+  font-size: 13px;
+  line-height: 1.6;
+  margin: 16px 0;
+  border-left: 3px solid var(--dl-green);
+}
+#content code {
+  font-family: 'Cascadia Code', 'Fira Code', 'Consolas', monospace;
+  font-size: 0.88em;
+}
+#content p code, #content li code, #content td code {
+  background: #f0f0f0;
+  color: #c7254e;
+  padding: 1px 5px;
+  border-radius: 3px;
+  font-size: 0.87em;
+}
+#content pre code {
+  background: none;
+  color: inherit;
+  padding: 0;
+  border-radius: 0;
+  font-size: inherit;
+}
+/* Blockquotes */
+#content blockquote {
+  border-left: 4px solid var(--dl-green);
+  padding: 10px 16px;
+  margin: 16px 0;
+  background: #f4f9ee;
+  color: var(--dl-text-secondary);
+  border-radius: 0 4px 4px 0;
+}
+/* Footer */
+.site-footer {
+  border-top: 1px solid var(--dl-border);
+  padding: 20px 32px;
+  text-align: right;
+  font-size: 11px;
+  color: #999;
+  background: var(--dl-white);
+  max-width: 1100px;
+  margin: 0 auto;
+}
+/* Phase badge */
+.phase-meta {
+  display: inline-flex;
+  gap: 12px;
+  margin-bottom: 28px;
+  flex-wrap: wrap;
+}
+.phase-badge {
+  background: var(--dl-green);
+  color: var(--dl-white);
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 12px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+</style>
+</head>
+<body>
+<header class="site-header">
+  <div class="header-left">
+    <span class="header-project">Agentic Campaign Orchestrator · Architecture Phase</span>
+    <span class="header-title">Architecture Overview</span>
+  </div>
+  <svg class="header-motif" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <circle cx="80" cy="50" r="70" stroke="#86BC25" stroke-width="2" fill="none"/>
+    <circle cx="80" cy="50" r="45" stroke="#86BC25" stroke-width="1.5" fill="none"/>
+  </svg>
+</header>
+<div class="accent-bar"></div>
+<nav class="site-nav">
+<a href="./agent-topology.html" >Agent Topology</a>
+<a href="./architecture-overview.html" class="nav-active">Architecture Overview</a>
+<a href="./data-model.html" >Data Model</a>
+<a href="./application-flow.html" >Application Flow</a>
+<a href="./api-interface-contract.html" >API Interface Contract</a>
+<a href="./risk-security-compliance.html" >Risk & Security</a>
+</nav>
+<div class="content-wrap">
+  <div id="content"></div>
+</div>
+<div class="site-footer">
+  Confidential — Architecture Phase, Iteration 1 &nbsp;·&nbsp; 2026-08-02 &nbsp;·&nbsp; Deloitte
+</div>
+<script type="text/plain" id="md">
+# Architecture Overview
+## Agentic Campaign Orchestrator
+
+**Phase:** architecture · **Iteration:** 1 · **Authored:** 2026-08-02  
+**Inputs:** `decision-registry.yaml`, `discuss-prd.md`, `module-map.yaml`, `cloud-readiness.yaml`
+
+---
+
+## 1. System Purpose
+
+The Agentic Campaign Orchestrator is an autonomous SaaS platform that acts as a digital media buyer. It continuously monitors Google Ads and Meta campaign performance, detects CPC degradation, and autonomously takes corrective actions (pause ad sets, reallocate budget, update bid caps) within user-defined guardrails. Human oversight is enforced at configurable thresholds via a Co-Pilot approval workflow.
+
+---
+
+## 2. High-Level Component Map
+
+```
+┌──────────────────────────────────────────────────────────────────────────┐
+│                        Subscriber (Browser)                              │
+│   React 18 + TypeScript + Vite + Shadcn/UI (AWS Amplify Hosting)         │
+│   ┌─────────────────┐  ┌──────────────────┐  ┌──────────────────────┐   │
+│   │ Campaign Health │  │ Co-Pilot Action  │  │ Guardrail Settings   │   │
+│   │ Dashboard (SSE) │  │ Queue (approve/  │  │ Form (campaign rules │   │
+│   │                 │  │ reject)          │  │ + Bedrock Guardrails)│   │
+│   └────────┬────────┘  └────────┬─────────┘  └──────────┬───────────┘   │
+└────────────┼────────────────────┼──────────────────────────┼─────────────┘
+             │ FastAPI SSE        │ REST                      │ REST
+             │ (metrics +         │ (confirmations)           │ (guardrails)
+             │  AG-UI events)     │                           │
+┌────────────▼────────────────────▼──────────────────────────▼─────────────┐
+│                     FastAPI Backend (Python)                              │
+│   ┌───────────────────┐  ┌────────────────────┐  ┌───────────────────┐  │
+│   │ /api/v1/stream/   │  │ /api/v1/confirm-   │  │ /api/v1/guard-    │  │
+│   │  metrics (SSE)    │  │  ations (queue)    │  │  rails (settings) │  │
+│   │  agent-events     │  │                    │  │                   │  │
+│   │  (AG-UI proxy)    │  │                    │  │                   │  │
+│   └───────┬───────────┘  └────────┬───────────┘  └──────────┬────────┘  │
+│           │                       │ DynamoDB read             │ Bedrock   │
+│           │              Cognito JWT middleware                │ Guardrails│
+│           │              Tier gating + access logging         │ API       │
+└───────────┼───────────────────────┼──────────────────────────┼───────────┘
+            │                       │                           │
+            │ AgentCore AG-UI SSE   │                           │
+┌───────────▼───────────────────────┼───────────────────────────┼───────────┐
+│           AWS Bedrock AgentCore Runtime                       │           │
+│   ┌────────────────────────────────────────────────┐         │           │
+│   │         LangGraph StateGraph                   │         │           │
+│   │  ┌───────────┐  ┌───────────┐  ┌───────────┐  │         │           │
+│   │  │ Monitor   │─▶│ Reason    │─▶│ Act       │  │         │           │
+│   │  │ Agent     │  │ Agent     │  │ Agent     │  │         │           │
+│   │  │ (fast LLM)│  │ (full LLM)│  │ (MCP exec)│  │         │           │
+│   │  └─────┬─────┘  └─────┬─────┘  └─────┬─────┘  │         │           │
+│   └────────┼───────────────┼───────────────┼────────┘         │           │
+│            │ MCP           │ RAG retrieval │ MCP tool          │           │
+│            │ poll          │               │ execution         │           │
+└────────────┼───────────────┼───────────────┼──────────────────┼───────────┘
+             │               │               │                   │
+    ┌────────┴──────┐ ┌──────┴───────┐ ┌────┴──────────┐ ┌─────┴──────────┐
+    │  FastMCP      │ │ OpenSearch   │ │ FastMCP       │ │ Bedrock        │
+    │  Google Ads   │ │ Serverless   │ │ Meta Ads      │ │ Guardrails     │
+    │  Mock (8001)  │ │ (vector RAG) │ │ Mock (8002)   │ │ (PII + policy) │
+    └───────────────┘ └──────┬───────┘ └───────────────┘ └────────────────┘
+                             │
+                    ┌────────┴──────────────────────────────┐
+                    │          Data Layer                    │
+                    │  ┌─────────────────────────────────┐  │
+                    │  │ Aurora Serverless PostgreSQL     │  │
+                    │  │ (campaigns, metrics, brand_rules)│  │
+                    │  │ Row-Level Security on tenant_id  │  │
+                    │  └─────────────────────────────────┘  │
+                    │  ┌─────────────────────────────────┐  │
+                    │  │ DynamoDB                        │  │
+                    │  │ (action-audit, session-state,   │  │
+                    │  │  human-confirmations, pii-      │  │
+                    │  │  audience)                      │  │
+                    │  └─────────────────────────────────┘  │
+                    │  ┌─────────────────────────────────┐  │
+                    │  │ AgentCore Memory                │  │
+                    │  │ (EPISODIC + SEMANTIC)           │  │
+                    │  └─────────────────────────────────┘  │
+                    └───────────────────────────────────────┘
+```
+
+---
+
+## 3. Technology Stack
+
+| Layer | Technology | Decision Rationale |
+|---|---|---|
+| **Agent Framework** | LangGraph `StateGraph` (TypedDict state) | Native AgentCore Runtime support; typed state prevents state corruption across nodes |
+| **Agent Runtime** | AWS Bedrock AgentCore Runtime | Managed serverless; per-session microVM isolation; native MCP gateway; AG-UI SSE streaming |
+| **LLM** | Provider-agnostic — Claude (Bedrock) / GPT (OpenAI API) | Avoid vendor lock-in; route via `LLM_PROVIDER` env var; Bedrock-hosted Claude default for SOC2/GDPR compliance |
+| **Monitor LLM** | Cost-optimised fast model (Haiku 4.5 / GPT-3.5-turbo) | Polling is high-frequency; cheap model for compare-two-floats breach detection |
+| **MCP Servers** | FastMCP (Python), HTTP/SSE transport | Lightweight; one server per ad network; native AgentCore MCP gateway integration |
+| **Vector Store** | OpenSearch Serverless | BM25 + k-NN hybrid search; serverless scaling; index-per-tenant isolation |
+| **Embeddings** | Amazon Titan Text Embeddings v2 (1536-dim) | Bedrock-native; no external API dependency; SOC2/GDPR compliant |
+| **Relational Store** | Aurora Serverless PostgreSQL | SQL aggregation for CPC/CTR/ROAS time-series; RLS for multi-tenant isolation |
+| **Session/Audit Store** | DynamoDB | Low-latency writes; partition key isolation; append-only audit table |
+| **Agent Memory** | Bedrock AgentCore Memory (EPISODIC + SEMANTIC) | Cross-run campaign learning; managed by AgentCore (no separate infrastructure) |
+| **Safety/PII** | Bedrock Guardrails + AWS Comprehend | Guardrails at LLM inference; Comprehend at RAG ingest boundary |
+| **Backend API** | FastAPI (Python) | Async; SSE support; compatible with Pydantic v2 typed models |
+| **Frontend** | React 18 + TypeScript + Vite + Shadcn/UI | Static SPA; AG-UI SSE EventSource; Shadcn/UI for dashboard components |
+| **Frontend Hosting** | AWS Amplify Hosting | CDN; auto-HTTPS; static SPA zip-upload (no Amplify CLI required) |
+| **Auth** | AWS Cognito (OIDC/JWT) | Managed; subscription tiers as User Groups; JWT claims for client tier UX |
+| **Deployment** | Canary release | Gradual traffic shift; automatic rollback on error rate threshold |
+
+---
+
+## 4. Key Design Principles
+
+### 4.1 Event-Triggered, Not Scheduled
+
+The agent system is **reactive** — the Monitor agent runs continuously but the expensive reasoning+action loop only fires when a breach is detected. This minimises LLM token costs (cheap model for polling; full model only on breach) while maintaining near-real-time response (<5 minutes breach-to-action).
+
+### 4.2 Provider-Agnostic LLM
+
+The Reason agent uses a thin adapter pattern switchable via the `LLM_PROVIDER` environment variable. Claude on Bedrock is the default (SOC2/GDPR compliant; no data leaves AWS). Switching to OpenAI GPT requires no code change — only env var change.
+
+### 4.3 Dual-Source RAG
+
+Retrieval combines two complementary sources that answer different questions:
+- **OpenSearch (semantic):** *"What do our brand guidelines say about ad creative?"*
+- **Aurora (exact):** *"What has this ad set's CPC/CTR/ROAS been over the last 7 days?"*
+
+Neither source alone is sufficient. The Reason agent receives both before deciding.
+
+### 4.4 Safety-First Guardrail Stack
+
+Guardrails operate at four independent layers:
+1. **Business rules (deterministic):** spend-delta gate, campaign-pause approval rule, keyword protection
+2. **Bedrock Guardrails (managed):** PII redaction, denied topics, content thresholds at LLM inference
+3. **AWS Comprehend (managed):** PII detection at brand guidelines ingest (keeps PII out of RAG corpus)
+4. **Human-in-the-loop:** DynamoDB confirmation queue for high-stakes actions; Co-Pilot approve/reject UI
+
+### 4.5 Tenant Isolation at Every Layer
+
+| Layer | Isolation Mechanism |
+|---|---|
+| PostgreSQL | Row-Level Security on `tenant_id` |
+| DynamoDB | Partition key: `tenant_id#resource_id` |
+| OpenSearch | Index-per-tenant: `tenant-{id}-brand-guidelines` |
+| AgentCore | Per-session microVM; session carries `tenant_id` in state |
+| API | Cognito JWT `tenant_id` claim; FastAPI extracts + enforces |
+
+---
+
+## 5. Subscription Tier Architecture
+
+```
+Cognito User Group   FastAPI Middleware      UI UX
+─────────────────────────────────────────────────
+observer            → read-only endpoints   → queue hidden; approve button disabled
+copilot             → confirmations read/write → queue visible + approve/reject
+autopilot           → full auto execution   → queue shows completed actions only
+```
+
+Tier gating is **hybrid**: JWT group claim used for client-side UX rendering (instant, no round-trip); FastAPI server enforces independently and logs every access decision to CloudWatch.
+
+---
+
+## 6. Data Flow Summary
+
+```
+[Ad Network Mock API]
+        │
+        │ MCP get_campaign_performance (60s poll)
+        ▼
+[Monitor Agent] → CPC baseline compare → breach? → NO → wait → repeat
+        │
+        YES (CPC > baseline × 1.20)
+        │
+        ▼
+[Retrieve Context Node]
+  ├─ OpenSearch: brand guidelines (semantic + BM25)
+  ├─ Aurora: 7-day CPC/CTR/ROAS aggregates
+  └─ AgentCore Memory: past interventions
+        │
+        ▼
+[Reason Agent] → LLM (Claude/GPT) → typed Decision JSON
+        │
+        ▼
+[Guardrail Check Node]
+  ├─ spend_delta > $500? → requires_approval = True
+  ├─ campaign pause? → requires_approval = True
+  └─ brand keyword? → requires_approval = True
+        │
+   ┌────┴────┐
+   │         │
+auto      queued
+   │         │
+   ▼         ▼
+[Act Node] [Enqueue to DynamoDB confirmation]
+  MCP tool    Co-Pilot UI shows card → approve/reject
+   │
+   ▼
+[Audit Write] → DynamoDB action-audit (immutable)
+   │
+   ▼
+[Memory Write] → AgentCore EPISODIC memory (outcome stored)
+```
+
+---
+
+## 7. Module-to-Component Mapping
+
+| Module | Primary Components |
+|---|---|
+| MOD-000 | FastAPI scaffold, LangGraph StateGraph skeleton, Aurora migrations, DynamoDB tables, React scaffold, Amplify wiring |
+| MOD-001 | Monitor agent node, FastMCP mock servers (Google Ads + Meta), Aurora metrics ingestion |
+| MOD-002 | Retrieve context node, Reason agent node, OpenSearch RAG, AgentCore Memory integration |
+| MOD-003 | Guardrail check node, Act agent node, MCP tool execution, DynamoDB audit+confirmation write |
+| MOD-004 | React dashboard views, FastAPI SSE endpoints, AG-UI event proxy, Amplify hosting deploy |
+| MOD-005 | Cognito group tier enforcement, RLS verification, GDPR erasure endpoint, Comprehend PII scan |
+
+---
+
+## 8. Provenance
+
+| Section | Origin | Source |
+|---|---|---|
+| 1. System Purpose | Inherited | `discuss-prd.md §2`, `project-intent.yaml (raw_statement)` |
+| 2. Component Map | Authored | Synthesised from `module-map.yaml`, `decision-registry.yaml → compute-platform`, `decision-registry.yaml → frontend-compute-platform`; ASCII diagram authored in arch phase |
+| 3. Technology Stack | Inherited | `decision-registry.yaml` (all tech-choice slugs); rationale authored to expand on registry notes |
+| 4.1 Event-Triggered Pattern | Inherited | `decision-registry.yaml → orchestration-pattern` |
+| 4.2 Provider-Agnostic LLM | Inherited | `decision-registry.yaml → llm-choice` |
+| 4.3 Dual-Source RAG | Inherited | `decision-registry.yaml → rag-data-model-strategy` |
+| 4.4 Guardrail Stack | Inherited | `decision-registry.yaml → data-privacy-controls`, `decision-registry.yaml → campaign-pause-requires-approval`, `decision-registry.yaml → spend-delta-approval-threshold`, `decision-registry.yaml → brand-protection-strategy` |
+| 4.5 Tenant Isolation | Inherited | `decision-registry.yaml → multi-tenant-isolation`, `decision-registry.yaml → gdpr-erasure-strategy` |
+| 5. Subscription Tier Architecture | Inherited | `decision-registry.yaml → monetisation-model`, `decision-registry.yaml → tier-gating-pattern` |
+| 6. Data Flow Summary | Authored | Synthesised from `agent-topology.md`, `discuss-prd.md §4` |
+| 7. Module-to-Component Mapping | Inherited | `module-map.yaml (all modules)` |
+
+</script>
+<script src="https://cdn.jsdelivr.net/npm/marked@12/marked.min.js"></script>
+<script>
+(function() {
+  var md = document.getElementById('md').textContent;
+  document.getElementById('content').innerHTML = marked.parse(md);
+})();
+</script>
+</body>
+</html>

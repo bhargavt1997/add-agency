@@ -1,0 +1,678 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Data Model — Agentic Campaign Orchestrator</title>
+<link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@300;400;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --dl-green: #86BC25;
+  --dl-neon-green: #86EB22;
+  --dl-blue: #00A3E0;
+  --dl-dark-gray: #282728;
+  --dl-gray: #E6E6E6;
+  --dl-text: #282728;
+  --dl-text-secondary: #555;
+  --dl-white: #FFFFFF;
+  --dl-bg: #f8f8f8;
+  --dl-surface: #FFFFFF;
+  --dl-border: #E0E0E0;
+  --dl-code-bg: #1e1e1e;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: 'Open Sans', sans-serif;
+  font-size: 15px;
+  line-height: 1.7;
+  color: var(--dl-text);
+  background: var(--dl-bg);
+}
+/* Header */
+.site-header {
+  background: var(--dl-dark-gray);
+  padding: 0 32px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 72px;
+  position: relative;
+  overflow: hidden;
+}
+.site-header::before {
+  content: '';
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  width: 4px;
+  background: var(--dl-green);
+}
+.header-left {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.header-project {
+  font-size: 11px;
+  font-weight: 300;
+  color: rgba(255,255,255,0.6);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.header-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--dl-white);
+}
+.header-motif {
+  position: absolute;
+  right: 0;
+  top: 0;
+  width: 100px;
+  height: 100%;
+  overflow: hidden;
+  opacity: 0.18;
+}
+/* Green accent bar */
+.accent-bar {
+  height: 4px;
+  background: var(--dl-green);
+  width: 100%;
+}
+/* Navigation */
+.site-nav {
+  background: var(--dl-dark-gray);
+  border-top: 1px solid rgba(255,255,255,0.08);
+  padding: 0 32px;
+  display: flex;
+  gap: 0;
+  overflow-x: auto;
+}
+.site-nav a {
+  display: block;
+  padding: 12px 16px;
+  font-size: 12px;
+  font-weight: 600;
+  color: rgba(255,255,255,0.55);
+  text-decoration: none;
+  white-space: nowrap;
+  border-bottom: 3px solid transparent;
+  transition: color 0.15s, border-color 0.15s;
+  letter-spacing: 0.02em;
+}
+.site-nav a:hover {
+  color: var(--dl-white);
+}
+.site-nav a.nav-active {
+  color: var(--dl-green);
+  border-bottom-color: var(--dl-green);
+}
+/* Main content */
+.content-wrap {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 40px 32px 80px;
+}
+/* Rendered markdown styles */
+#content h1 {
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--dl-dark-gray);
+  margin-bottom: 4px;
+  padding-bottom: 12px;
+  border-bottom: 2px solid var(--dl-green);
+}
+#content h2 {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--dl-dark-gray);
+  margin-top: 40px;
+  margin-bottom: 14px;
+  padding-left: 14px;
+  border-left: 4px solid var(--dl-green);
+}
+#content h3 {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--dl-dark-gray);
+  margin-top: 28px;
+  margin-bottom: 10px;
+  padding-left: 10px;
+  border-left: 3px solid var(--dl-gray);
+}
+#content h4 {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--dl-text-secondary);
+  margin-top: 20px;
+  margin-bottom: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+#content p {
+  margin-bottom: 14px;
+  color: var(--dl-text);
+}
+#content a { color: var(--dl-blue); text-decoration: none; }
+#content a:hover { text-decoration: underline; }
+#content ul, #content ol {
+  margin: 10px 0 14px 24px;
+}
+#content li { margin-bottom: 5px; }
+#content strong { font-weight: 700; }
+#content em { font-style: italic; }
+#content hr {
+  border: none;
+  border-top: 1px solid var(--dl-border);
+  margin: 32px 0;
+}
+/* Tables */
+#content table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 20px 0;
+  font-size: 13.5px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.07);
+  border-radius: 6px;
+  overflow: hidden;
+}
+#content thead tr {
+  background: var(--dl-dark-gray);
+  color: var(--dl-white);
+}
+#content thead th {
+  padding: 11px 14px;
+  text-align: left;
+  font-weight: 600;
+  font-size: 12px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+#content tbody tr {
+  border-bottom: 1px solid var(--dl-border);
+}
+#content tbody tr:nth-child(even) {
+  background: #f4f9ee;
+}
+#content tbody tr:hover {
+  background: #eef7e1;
+}
+#content td {
+  padding: 10px 14px;
+  vertical-align: top;
+}
+/* Code blocks */
+#content pre {
+  background: var(--dl-code-bg);
+  color: #d4d4d4;
+  border-radius: 6px;
+  padding: 18px 20px;
+  overflow-x: auto;
+  font-size: 13px;
+  line-height: 1.6;
+  margin: 16px 0;
+  border-left: 3px solid var(--dl-green);
+}
+#content code {
+  font-family: 'Cascadia Code', 'Fira Code', 'Consolas', monospace;
+  font-size: 0.88em;
+}
+#content p code, #content li code, #content td code {
+  background: #f0f0f0;
+  color: #c7254e;
+  padding: 1px 5px;
+  border-radius: 3px;
+  font-size: 0.87em;
+}
+#content pre code {
+  background: none;
+  color: inherit;
+  padding: 0;
+  border-radius: 0;
+  font-size: inherit;
+}
+/* Blockquotes */
+#content blockquote {
+  border-left: 4px solid var(--dl-green);
+  padding: 10px 16px;
+  margin: 16px 0;
+  background: #f4f9ee;
+  color: var(--dl-text-secondary);
+  border-radius: 0 4px 4px 0;
+}
+/* Footer */
+.site-footer {
+  border-top: 1px solid var(--dl-border);
+  padding: 20px 32px;
+  text-align: right;
+  font-size: 11px;
+  color: #999;
+  background: var(--dl-white);
+  max-width: 1100px;
+  margin: 0 auto;
+}
+/* Phase badge */
+.phase-meta {
+  display: inline-flex;
+  gap: 12px;
+  margin-bottom: 28px;
+  flex-wrap: wrap;
+}
+.phase-badge {
+  background: var(--dl-green);
+  color: var(--dl-white);
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 12px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+</style>
+</head>
+<body>
+<header class="site-header">
+  <div class="header-left">
+    <span class="header-project">Agentic Campaign Orchestrator · Architecture Phase</span>
+    <span class="header-title">Data Model</span>
+  </div>
+  <svg class="header-motif" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <circle cx="80" cy="50" r="70" stroke="#86BC25" stroke-width="2" fill="none"/>
+    <circle cx="80" cy="50" r="45" stroke="#86BC25" stroke-width="1.5" fill="none"/>
+  </svg>
+</header>
+<div class="accent-bar"></div>
+<nav class="site-nav">
+<a href="./agent-topology.html" >Agent Topology</a>
+<a href="./architecture-overview.html" >Architecture Overview</a>
+<a href="./data-model.html" class="nav-active">Data Model</a>
+<a href="./application-flow.html" >Application Flow</a>
+<a href="./api-interface-contract.html" >API Interface Contract</a>
+<a href="./risk-security-compliance.html" >Risk & Security</a>
+</nav>
+<div class="content-wrap">
+  <div id="content"></div>
+</div>
+<div class="site-footer">
+  Confidential — Architecture Phase, Iteration 1 &nbsp;·&nbsp; 2026-08-02 &nbsp;·&nbsp; Deloitte
+</div>
+<script type="text/plain" id="md">
+# Data Model
+## Agentic Campaign Orchestrator
+
+**Phase:** architecture · **Iteration:** 1 · **Authored:** 2026-08-02  
+**Inputs:** `decision-registry.yaml`, `module-map.yaml`, `data-readiness.yaml`, `data-schema-snapshot.yaml`
+
+---
+
+## 1. Overview
+
+The data layer is split across three store types, each chosen for its access pattern:
+
+| Store | Service | Purpose |
+|---|---|---|
+| **Relational** | Aurora Serverless PostgreSQL | Campaign metrics (time-series), tenant configs, brand hard rules; SQL aggregation |
+| **Vector** | OpenSearch Serverless | Brand guidelines RAG corpus; hybrid k-NN + BM25 retrieval |
+| **Document** | DynamoDB (4 tables) | Session state, immutable action audit, human confirmations, PII audience |
+| **Agent Memory** | Bedrock AgentCore Memory | EPISODIC + SEMANTIC cross-run campaign learnings |
+
+All stores enforce **tenant isolation**. No cross-tenant data access is possible by design. Greenfield project — no migration from prior schema.
+
+---
+
+## 2. Aurora Serverless PostgreSQL Schema
+
+### 2.1 tenants
+
+```sql
+CREATE TABLE tenants (
+    id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    name            TEXT NOT NULL,
+    subscription_tier TEXT NOT NULL CHECK (subscription_tier IN ('observer','copilot','autopilot')),
+    cognito_group   TEXT NOT NULL,
+    created_at      TIMESTAMPTZ DEFAULT now(),
+    deleted_at      TIMESTAMPTZ,          -- soft-delete (GDPR erasure)
+    eu_data_residency BOOLEAN DEFAULT FALSE
+);
+```
+
+### 2.2 campaigns
+
+```sql
+CREATE TABLE campaigns (
+    id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    tenant_id       UUID NOT NULL REFERENCES tenants(id),
+    network         TEXT NOT NULL CHECK (network IN ('google_ads','meta')),
+    external_id     TEXT NOT NULL,        -- ad network campaign ID
+    name            TEXT NOT NULL,
+    status          TEXT DEFAULT 'active',
+    created_at      TIMESTAMPTZ DEFAULT now(),
+    deleted_at      TIMESTAMPTZ
+);
+
+-- RLS
+ALTER TABLE campaigns ENABLE ROW LEVEL SECURITY;
+CREATE POLICY tenant_isolation ON campaigns
+    USING (tenant_id = current_setting('app.current_tenant_id')::UUID);
+```
+
+### 2.3 ad_sets
+
+```sql
+CREATE TABLE ad_sets (
+    id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    tenant_id       UUID NOT NULL REFERENCES tenants(id),
+    campaign_id     UUID NOT NULL REFERENCES campaigns(id),
+    external_id     TEXT NOT NULL,
+    name            TEXT NOT NULL,
+    network         TEXT NOT NULL,
+    status          TEXT DEFAULT 'active',
+    spend_cap_usd   DECIMAL(12,2),
+    created_at      TIMESTAMPTZ DEFAULT now(),
+    deleted_at      TIMESTAMPTZ
+);
+
+ALTER TABLE ad_sets ENABLE ROW LEVEL SECURITY;
+CREATE POLICY tenant_isolation ON ad_sets
+    USING (tenant_id = current_setting('app.current_tenant_id')::UUID);
+```
+
+### 2.4 campaign_metrics_timeseries
+
+High-write table — one row per (ad_set_id, poll_cycle). Partitioned by `ts` for efficient 7-day window queries.
+
+```sql
+CREATE TABLE campaign_metrics_timeseries (
+    id              BIGSERIAL,
+    tenant_id       UUID NOT NULL,
+    ad_set_id       UUID NOT NULL REFERENCES ad_sets(id),
+    ts              TIMESTAMPTZ NOT NULL DEFAULT now(),
+    cpc             DECIMAL(10,4),        -- cost per click (USD)
+    ctr             DECIMAL(6,4),         -- click-through rate (0.0–1.0)
+    roas            DECIMAL(10,4),        -- return on ad spend
+    impressions     BIGINT,
+    clicks          BIGINT,
+    spend_usd       DECIMAL(12,4),
+    PRIMARY KEY (id, ts)
+) PARTITION BY RANGE (ts);
+
+-- 7-day rolling baseline query (used by Monitor agent)
+-- SELECT ad_set_id, AVG(cpc) AS baseline_cpc
+-- FROM campaign_metrics_timeseries
+-- WHERE tenant_id=$1 AND ts > now() - INTERVAL '7 days'
+-- GROUP BY ad_set_id;
+
+ALTER TABLE campaign_metrics_timeseries ENABLE ROW LEVEL SECURITY;
+CREATE POLICY tenant_isolation ON campaign_metrics_timeseries
+    USING (tenant_id = current_setting('app.current_tenant_id')::UUID);
+```
+
+### 2.5 brand_rules
+
+Hard rules stored as structured rows alongside vector guidelines in OpenSearch.
+
+```sql
+CREATE TABLE brand_rules (
+    id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    tenant_id       UUID NOT NULL REFERENCES tenants(id),
+    rule_type       TEXT NOT NULL CHECK (rule_type IN ('keyword_protect','spend_limit','cpc_ceiling','pause_threshold')),
+    rule_key        TEXT,                 -- e.g. keyword value for keyword_protect
+    rule_value      TEXT,                 -- e.g. "500" for spend_limit
+    description     TEXT,
+    active          BOOLEAN DEFAULT TRUE,
+    created_at      TIMESTAMPTZ DEFAULT now()
+);
+
+ALTER TABLE brand_rules ENABLE ROW LEVEL SECURITY;
+CREATE POLICY tenant_isolation ON brand_rules
+    USING (tenant_id = current_setting('app.current_tenant_id')::UUID);
+```
+
+**Protected keyword lookup example:**
+```sql
+SELECT rule_key FROM brand_rules
+WHERE tenant_id=$1 AND rule_type='keyword_protect' AND active=TRUE;
+```
+
+### 2.6 action_log (relational mirror)
+
+Mirror of DynamoDB audit for SQL-queryable audit trail:
+
+```sql
+CREATE TABLE action_log (
+    id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    tenant_id       UUID NOT NULL,
+    action_type     TEXT NOT NULL,
+    ad_set_id       UUID,
+    campaign_id     UUID,
+    trigger_cpc     DECIMAL(10,4),
+    baseline_cpc    DECIMAL(10,4),
+    decision_json   JSONB,
+    status          TEXT NOT NULL CHECK (status IN ('executed','queued','rejected','approved')),
+    approver_id     TEXT,               -- Cognito user sub (if human approval)
+    agent_version   TEXT,
+    executed_at     TIMESTAMPTZ DEFAULT now(),
+    deleted_at      TIMESTAMPTZ         -- GDPR soft-delete
+);
+
+ALTER TABLE action_log ENABLE ROW LEVEL SECURITY;
+CREATE POLICY tenant_isolation ON action_log
+    USING (tenant_id = current_setting('app.current_tenant_id')::UUID);
+```
+
+### 2.7 Row-Level Security Enforcement
+
+Every connection sets the tenant context at session start:
+```sql
+SET app.current_tenant_id = '<tenant_id_from_jwt>';
+```
+This is enforced by FastAPI dependency injection — no query runs without the session var being set.
+
+---
+
+## 3. OpenSearch Serverless — Vector Store
+
+### 3.1 Index Structure
+
+**One index per tenant:** `tenant-{tenant_id}-brand-guidelines`
+
+```json
+{
+  "mappings": {
+    "properties": {
+      "tenant_id":    { "type": "keyword" },
+      "chunk_id":     { "type": "keyword" },
+      "doc_name":     { "type": "text" },
+      "content":      { "type": "text", "analyzer": "standard" },
+      "embedding":    {
+        "type": "knn_vector",
+        "dimension": 1536,
+        "method": { "name": "hnsw", "engine": "faiss" }
+      },
+      "rule_type":    { "type": "keyword" },
+      "ingested_at":  { "type": "date" }
+    }
+  }
+}
+```
+
+### 3.2 Retrieval Strategy (Hybrid BM25 + k-NN)
+
+```json
+{
+  "query": {
+    "bool": {
+      "should": [
+        {
+          "knn": {
+            "embedding": {
+              "vector": "<query_embedding>",
+              "k": 10
+            }
+          }
+        },
+        {
+          "match": {
+            "content": "<query_text>"
+          }
+        }
+      ]
+    }
+  },
+  "size": 5
+}
+```
+
+### 3.3 Ingest Pipeline
+
+```
+[User uploads brand guidelines doc (PDF/DOCX/TXT)]
+        │
+        ▼
+[AWS Comprehend PII scan] — blocks if PII detected
+        │
+        ▼
+[Document chunking (512-token chunks, 64-token overlap)]
+        │
+        ▼
+[Amazon Titan Text Embeddings v2 encode] → 1536-dim vector
+        │
+        ▼
+[OpenSearch upsert — index: tenant-{id}-brand-guidelines]
+```
+
+---
+
+## 4. DynamoDB Tables
+
+### 4.1 action-audit (Immutable Audit Log)
+
+**Partition key:** `tenant_id` | **Sort key:** `action_id` (KSUID — time-sortable)
+
+| Attribute | Type | Description |
+|---|---|---|
+| `tenant_id` | S | Tenant partition |
+| `action_id` | S | KSUID (time-sortable) |
+| `action_type` | S | pause_ad_set / reallocate_budget / etc. |
+| `ad_set_id` | S | Target ad set |
+| `campaign_id` | S | Parent campaign |
+| `trigger_cpc` | N | CPC that triggered breach |
+| `baseline_cpc` | N | 7-day rolling avg at time of breach |
+| `decision_json` | S | Full Decision object (JSON string) |
+| `status` | S | executed / queued / approved / rejected |
+| `approver_id` | S | Cognito user sub (if human approval) |
+| `agent_version` | S | LangGraph state graph version hash |
+| `executed_at` | S | ISO 8601 timestamp |
+
+**Append-only enforced** via IAM condition: `"Condition": {"ForAllValues:StringEquals": {"dynamodb:Attributes": [...allowed attributes]}}` — no UpdateItem permission.
+
+### 4.2 session-state
+
+**Partition key:** `tenant_id#session_id`
+
+| Attribute | Type | Description |
+|---|---|---|
+| `pk` | S | `tenant_id#session_id` |
+| `state_json` | S | Serialized `CampaignOrchestratorState` |
+| `updated_at` | S | ISO 8601 |
+| TTL | N | Unix timestamp (auto-expire after 24h) |
+
+### 4.3 human-confirmations
+
+**Partition key:** `tenant_id` | **Sort key:** `confirmation_id` (KSUID)
+
+| Attribute | Type | Description |
+|---|---|---|
+| `tenant_id` | S | Tenant partition |
+| `confirmation_id` | S | KSUID |
+| `action_payload` | S | Decision JSON requiring approval |
+| `spend_delta` | N | Spend impact |
+| `trigger_reason` | S | `spend_delta` / `campaign_pause` / `brand_keyword` |
+| `status` | S | pending / approved / rejected |
+| `approver_id` | S | Cognito user sub (set on decision) |
+| `decision_at` | S | ISO 8601 timestamp |
+| `created_at` | S | ISO 8601 |
+| `deleted_at` | S | GDPR soft-delete timestamp |
+| TTL | N | Auto-expire after 30 days (GDPR hard-delete) |
+
+### 4.4 pii-audience (IAM-Gated)
+
+**Partition key:** `tenant_id` | **Sort key:** `audience_id`
+
+Contains audience targeting identifiers (hashed email lists, custom audience IDs) — never included in the RAG corpus. Accessible only to the `pii-service` IAM role.
+
+| Attribute | Type | Description |
+|---|---|---|
+| `tenant_id` | S | Tenant partition |
+| `audience_id` | S | Audience identifier |
+| `audience_type` | S | hashed_email_list / custom_audience / lookalike |
+| `network` | S | google_ads / meta |
+| `deleted_at` | S | GDPR soft-delete timestamp |
+| TTL | N | 30-day hard-delete |
+
+---
+
+## 5. AgentCore Memory
+
+| Memory Strategy | Content Stored | Retention |
+|---|---|---|
+| EPISODIC | Past breach events + decisions + CPC outcomes per ad_set | Cross-run; managed by AgentCore |
+| SEMANTIC | Distilled brand + channel performance patterns | Long-term; managed by AgentCore |
+
+Memory is opaque (no schema control) — queried via AgentCore Memory SDK by `tenant_id` + retrieval query.
+
+---
+
+## 6. Entity Relationship Overview
+
+```
+tenants (1) ──────< campaigns (1) ──────< ad_sets
+    │                                        │
+    │                                        │
+    │< brand_rules                           │< campaign_metrics_timeseries
+    │                                        │
+    │< action_log ──────────────────────────>│
+    │
+    ├── DynamoDB: action-audit (tenant_id partition)
+    ├── DynamoDB: session-state (tenant_id#session_id)
+    ├── DynamoDB: human-confirmations (tenant_id partition)
+    ├── DynamoDB: pii-audience (tenant_id partition, IAM-gated)
+    └── OpenSearch: tenant-{id}-brand-guidelines (per-tenant index)
+```
+
+---
+
+## 7. GDPR Data Residency
+
+| Store | EU Tenant Residency | Non-EU Residency |
+|---|---|---|
+| Aurora Serverless | `eu-west-1` / `eu-central-1` cluster | `us-east-1` cluster |
+| DynamoDB | EU region tables | US region tables |
+| OpenSearch | EU region collection | US region collection |
+| AgentCore Memory | EU AgentCore endpoint | US AgentCore endpoint |
+
+EU tenant routing enforced at FastAPI middleware layer using `tenant.eu_data_residency` flag.
+
+---
+
+## 8. Provenance
+
+| Section | Origin | Source |
+|---|---|---|
+| 1. Overview (store selection) | Inherited | `decision-registry.yaml → campaign-data-model`, `decision-registry.yaml → vector-db-choice`, `decision-registry.yaml → rag-data-model-strategy` |
+| 2. Aurora Schema | Authored | Schema designed in architecture phase; grounded in `module-map.yaml (MOD-000 db layer, MOD-001 db layer)`; RLS pattern from `decision-registry.yaml → multi-tenant-isolation` |
+| 3. OpenSearch Index + Ingest | Authored | Index schema authored; embedding model from `decision-registry.yaml → embedding-model`; ingest pipeline from `decision-registry.yaml → brand-guidelines-ingestion` |
+| 4. DynamoDB Tables | Authored | Table designs authored; attribute set from `decision-registry.yaml → audit-logging`; GDPR TTL from `decision-registry.yaml → gdpr-erasure-strategy`; PII segregation from `decision-registry.yaml → pii-handling-strategy` |
+| 5. AgentCore Memory | Inherited | `decision-registry.yaml → agent-memory-strategy` |
+| 6. Entity Relationships | Authored | Derived from Aurora schema + DynamoDB tables in architecture phase |
+| 7. GDPR Data Residency | Inherited | `decision-registry.yaml → gdpr-data-residency` |
+
+</script>
+<script src="https://cdn.jsdelivr.net/npm/marked@12/marked.min.js"></script>
+<script>
+(function() {
+  var md = document.getElementById('md').textContent;
+  document.getElementById('content').innerHTML = marked.parse(md);
+})();
+</script>
+</body>
+</html>
