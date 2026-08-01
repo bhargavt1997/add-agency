@@ -138,6 +138,541 @@ decisions:
   source: user
   activates: []
   notes: RAG+agentic app on AWS with MCP infrastructure layer
+- slug_id: cpc-threshold-method
+  area: Business Outcomes & Success Metrics
+  question: How should the agent define CPC is too high?
+  options_presented:
+  - rolling-7day-average
+  - absolute-ceiling
+  - hybrid-rolling-with-override
+  - ml-anomaly-detection
+  options_eliminated: []
+  response: rolling-7day-average
+  response_type: single-select
+  source: user
+  activates: []
+  notes: User chose rolling 7-day average — self-calibrating per campaign, handles
+    seasonality, defensible story
+- slug_id: cpc-spike-threshold-pct
+  area: Business Outcomes & Success Metrics
+  question: What default CPC spike threshold triggers agent action?
+  options_presented:
+  - 20pct-above-baseline
+  - 30pct-above-baseline
+  - 15pct-above-baseline
+  - user-configurable-20pct-default
+  options_eliminated: []
+  response: 20pct-above-baseline
+  response_type: single-select
+  source: user
+  activates: []
+  notes: 20% above 7-day baseline — catches meaningful degradation without over-triggering
+    on daily variance
+- slug_id: success-metrics
+  area: Business Outcomes & Success Metrics
+  question: What are the primary success metrics tracked and reported to customers?
+  options_presented:
+  - cpc-reduction-pct
+  - roas-improvement
+  - actions-taken-and-outcome
+  - time-to-detect-and-action
+  options_eliminated: []
+  response:
+  - cpc-reduction-pct
+  - roas-improvement
+  - actions-taken-and-outcome
+  - time-to-detect-and-action
+  response_type: multi-select
+  source: user
+  activates: []
+  notes: All four metrics selected — CPC reduction is core value, ROAS is revenue
+    link, actions log builds trust, latency proves agent speed
+- slug_id: autonomous-action-scope
+  area: Autonomous Action Flow & Guardrails
+  question: Which actions can the agent take autonomously on Autopilot tier?
+  options_presented:
+  - pause-resume-ad-sets
+  - reallocate-budget-between-ad-sets
+  - adjust-bid-cap
+  - pause-entire-campaign
+  options_eliminated: []
+  response:
+  - pause-resume-ad-sets
+  - reallocate-budget-between-ad-sets
+  - adjust-bid-cap
+  - pause-entire-campaign
+  response_type: multi-select
+  source: user
+  activates: []
+  notes: All four selected but campaign-level pause is separately gated; ad-set pause
+    + budget realloc + bid-cap are core autonomous actions
+- slug_id: campaign-pause-requires-approval
+  area: Autonomous Action Flow & Guardrails
+  question: Does pausing an entire campaign always require human approval?
+  options_presented:
+  - always-require-approval
+  - allow-autopilot-above-50pct-spike
+  options_eliminated: []
+  response: always-require-approval
+  response_type: single-select
+  source: user
+  activates: []
+  notes: High-stakes action — user confirmed campaign-level pause always requires
+    human gate regardless of tier
+- slug_id: brand-protection-strategy
+  area: Autonomous Action Flow & Guardrails
+  question: How should brand-keyword protection work?
+  options_presented:
+  - user-defined-protected-keywords-list
+  - rag-inferred-brand-rules
+  - both-user-list-and-rag
+  options_eliminated: []
+  response: user-defined-protected-keywords-list
+  response_type: single-select
+  source: user
+  activates: []
+  notes: User-defined protected keyword list — simple, transparent, predictable; agent
+    skips these ad sets for all actions
+- slug_id: spend-delta-approval-threshold
+  area: Autonomous Action Flow & Guardrails
+  question: What spend-delta limit requires human approval on Autopilot?
+  options_presented:
+  - 500-dollar-limit
+  - 1000-dollar-limit
+  - 10pct-of-daily-budget
+  - user-configurable-500-default
+  options_eliminated: []
+  response: 500-dollar-limit
+  response_type: single-select
+  source: user
+  activates: []
+  notes: 500 USD single-action budget move requires human approval — sensible default
+    for SMB/mid-market
+- slug_id: agent-framework
+  area: Agentic AI Design
+  question: Which agent framework powers the orchestrator?
+  options_presented:
+  - langgraph
+  - bedrock-agentcore-native
+  - autogen
+  - custom-loop
+  options_eliminated: []
+  response: langgraph
+  response_type: single-select
+  source: user
+  activates: []
+  notes: LangGraph chosen — stateful graph loops with checkpointing; best fit for
+    monitor/reason/act cycle on AWS
+- slug_id: llm-choice
+  area: Agentic AI Design
+  question: Which LLM powers the reasoning engine?
+  options_presented:
+  - claude-sonnet-bedrock
+  - claude-opus-bedrock
+  - amazon-titan-nova
+  - gpt4o-azure
+  options_eliminated: []
+  response: provider-agnostic-claude-or-gpt
+  response_type: single-select
+  source: user
+  activates: []
+  notes: Claude Sonnet via Bedrock — stays on AWS stack (SOC2), 200K context, strong
+    reasoning, cost-predictable
+  revised_from:
+  - response: claude-sonnet-bedrock
+    revised_at: '2026-08-02'
+    reason: Researcher recommended tiered approach; user confirmed. Haiku for monitor/detect
+      (continuous polling), Claude Sonnet for RAG reasoning/decision (breach only).
+      60-80% cost reduction at SaaS scale.
+  - response: tiered-claude-sonnet-plus-haiku
+    revised_at: '2026-08-02'
+    reason: User prefers LLM-agnostic design — architecture references Claude API
+      or GPT API as interchangeable options. For AWS/SOC2/GDPR deployments, Bedrock-hosted
+      Claude is the default; Azure OpenAI GPT-4o is an alternative path.
+- slug_id: agent-topology
+  area: Agentic AI Design
+  question: What agent topology powers the orchestrator?
+  options_presented:
+  - 3-agent-monitor-reason-act
+  - single-agent-tool-calls
+  - 2-agent-monitor-reason-act
+  options_eliminated: []
+  response: 3-agent-monitor-reason-act
+  response_type: single-select
+  source: user
+  activates: []
+  notes: '3-agent topology: Monitor (polling), Reason (RAG+decision), Act (MCP execution)
+    — independently scalable and testable'
+- slug_id: agent-memory-strategy
+  area: Agentic AI Design
+  question: How should the agent remember context between monitoring runs?
+  options_presented:
+  - bedrock-agentcore-memory
+  - dynamodb-session-state
+  - stateless-rag-only
+  options_eliminated: []
+  response: hybrid-inctx-agentcore-episodic-semantic
+  response_type: single-select
+  source: user
+  activates: []
+  notes: Bedrock AgentCore Memory — managed, per-tenant semantic memory; stores campaign
+    performance summaries and past decisions
+  revised_from:
+  - response: bedrock-agentcore-memory
+    revised_at: '2026-08-02'
+    reason: 'Researcher recommends hybrid: LangGraph TypedDict state for fast within-run
+      campaign context (zero latency) + AgentCore Memory EPISODIC+SEMANTIC for cross-run
+      learning. Two-callback seam: recall_node before decision_engine, persist_node
+      after action_execute.'
+- slug_id: vector-db-choice
+  area: Data & RAG Architecture
+  question: Which storage handles campaign performance data and RAG embeddings?
+  options_presented:
+  - postgres-pgvector-rds
+  - rds-plus-opensearch-serverless
+  - bedrock-knowledge-bases
+  - postgres-plus-pinecone
+  options_eliminated: []
+  response: opensearch-serverless
+  response_type: single-select
+  source: user
+  activates: []
+  notes: 'pgvector on RDS Postgres — dual-use: SQL for time-series CPC metrics + vector
+    for brand guidelines RAG; AWS-native, GDPR-compliant'
+  revised_from:
+  - response: postgres-pgvector-rds
+    revised_at: '2026-08-02'
+    reason: 'User confirmed split: OpenSearch Serverless for vector search (brand
+      guidelines, campaign narrative summaries) + Aurora Postgres for relational campaign
+      metrics. Matches AWS native services playbook exactly.'
+- slug_id: rag-data-model-strategy
+  area: Data & RAG Architecture
+  question: How is campaign performance history structured for the reasoning engine?
+  options_presented:
+  - hybrid-sql-timeseries-plus-rag-guidelines
+  - everything-through-rag
+  - structured-only-no-rag
+  options_eliminated: []
+  response: hybrid-sql-timeseries-plus-rag-guidelines
+  response_type: single-select
+  source: user
+  activates: []
+  notes: 'Hybrid: SQL aggregates for CPC time-series metrics (precise, fast); RAG
+    for brand guidelines and campaign narrative context only'
+- slug_id: embedding-model
+  area: Data & RAG Architecture
+  question: What embedding model generates vectors for brand guidelines?
+  options_presented:
+  - amazon-titan-text-embeddings-v2
+  - cohere-embed-v3-bedrock
+  - openai-text-embedding-3-large
+  options_eliminated: []
+  response: amazon-titan-text-embeddings-v2
+  response_type: single-select
+  source: user
+  activates: []
+  notes: Titan Text Embeddings v2 via Bedrock — AWS-native, SOC2/GDPR compliant, cost-efficient
+    for scheduled polling
+- slug_id: mcp-server-pattern
+  area: MCP Server Design & Integrations
+  question: How are MCP servers implemented for ad network integrations?
+  options_presented:
+  - fastmcp-http-sse
+  - bedrock-agentcore-mcp-gateway
+  - custom-python-stdio
+  options_eliminated: []
+  response: fastmcp-http-sse
+  response_type: single-select
+  source: user
+  activates: []
+  notes: FastMCP with HTTP/SSE transport — declarative tool definitions, works with
+    AgentCore MCP gateway, clean mock/real switching
+- slug_id: mcp-server-topology
+  area: MCP Server Design & Integrations
+  question: How many MCP servers are deployed?
+  options_presented:
+  - one-per-ad-network
+  - one-unified-server
+  - three-servers-with-analytics-mcp
+  options_eliminated: []
+  response: one-per-ad-network
+  response_type: single-select
+  source: user
+  activates: []
+  notes: One MCP server per ad network (Google Ads MCP + Meta MCP) — independent deployment,
+    versioning, rate-limit handling
+- slug_id: mcp-tool-definitions
+  area: MCP Server Design & Integrations
+  question: Which tools does each ad network MCP server expose?
+  options_presented:
+  - get_campaign_performance
+  - pause_ad_set_resume_ad_set
+  - reallocate_budget
+  - update_bid_cap
+  options_eliminated: []
+  response:
+  - get_campaign_performance
+  - pause_ad_set_resume_ad_set
+  - reallocate_budget
+  - update_bid_cap
+  response_type: multi-select
+  source: user
+  activates: []
+  notes: '4 core tools: read (get_campaign_performance) + 3 write tools (pause/resume,
+    reallocate, bid cap) — matches the autonomous action scope'
+- slug_id: multi-tenant-isolation
+  area: Security, Privacy & Compliance
+  question: How is multi-tenant data isolation enforced?
+  options_presented:
+  - rls-postgres-tenant-id-partitioning
+  - separate-schema-per-tenant
+  - separate-rds-instance-per-tenant
+  options_eliminated: []
+  response: rls-postgres-tenant-id-partitioning
+  response_type: single-select
+  source: user
+  activates: []
+  notes: PostgreSQL row-level security + tenant_id on all tables; AgentCore sessions
+    scoped per tenant; cost-efficient, proven pattern
+- slug_id: gdpr-erasure-strategy
+  area: Security, Privacy & Compliance
+  question: How are GDPR erasure requests handled?
+  options_presented:
+  - soft-delete-30day-retention-hard-delete
+  - immediate-hard-delete
+  - anonymisation
+  options_eliminated: []
+  response: soft-delete-30day-retention-hard-delete
+  response_type: single-select
+  source: user
+  activates: []
+  notes: Soft-delete immediately (agent stops seeing data), physical purge after 30
+    days by tenant_id. CloudWatch streams auto-expire at 365 days.
+- slug_id: auth-strategy
+  area: Security, Privacy & Compliance
+  question: How does authentication work for the SaaS product?
+  options_presented:
+  - aws-cognito-oidc-jwt
+  - auth0
+  - custom-jwt-bcrypt
+  options_eliminated: []
+  response: aws-cognito-oidc-jwt
+  response_type: single-select
+  source: user
+  activates: []
+  notes: AWS Cognito — OIDC/JWT, MFA, subscription tiers as Cognito user groups, SOC2-auditable,
+    stays AWS-native
+- slug_id: frontend-framework
+  area: UI/UX Dashboard Design
+  question: Which frontend framework for the campaign dashboard?
+  options_presented:
+  - react-typescript-shadcn
+  - nextjs-typescript
+  - vue-nuxt
+  options_eliminated: []
+  response: react-typescript-shadcn
+  response_type: single-select
+  source: user
+  activates: []
+  notes: React + TypeScript + Shadcn/UI — industry standard for dashboards, Recharts
+    for CPC charts, large talent pool
+- slug_id: copilot-approval-ux
+  area: UI/UX Dashboard Design
+  question: How does Co-Pilot tier present action suggestions for approval?
+  options_presented:
+  - in-app-queue-push-notification
+  - email-digest-approve-links
+  - dashboard-only-no-push
+  options_eliminated: []
+  response: in-app-queue-push-notification
+  response_type: single-select
+  source: user
+  activates: []
+  notes: In-app approval queue + Slack/email push notification; one-click Approve/Reject
+    with agent rationale visible
+- slug_id: gdpr-data-residency
+  area: Security, Privacy & Compliance
+  question: How should EU campaign data residency be managed?
+  options_presented:
+  - eu-aws-region
+  - sccs-cross-region
+  - hybrid-eu-primary-sccs
+  options_eliminated: []
+  response: hybrid-eu-primary-sccs
+  response_type: single-select
+  source: inferred
+  activates: []
+  notes: 'Hybrid: EU tenants default to eu-west-1/eu-central-1; SCCs backstop for
+    Bedrock model-availability gaps; DPAs with AWS and Anthropic required'
+- slug_id: data-privacy-controls
+  area: Security, Privacy & Compliance
+  question: How is PII in ad performance and audience data controlled?
+  options_presented:
+  - bedrock-guardrails-primary
+  - bedrock-guardrails-plus-comprehend
+  - data-minimization-first
+  options_eliminated: []
+  response: bedrock-guardrails-plus-comprehend
+  response_type: single-select
+  source: inferred
+  activates: []
+  notes: Bedrock Guardrails as LLM-layer backstop + AWS Comprehend PII scan at RAG
+    ingest boundary; prevents audience demographic data entering vector store
+- slug_id: pii-handling-strategy
+  area: Security, Privacy & Compliance
+  question: How are PII identifiers from retargeting lists handled in the data pipeline?
+  options_presented:
+  - detect-redact-at-boundary
+  - pseudonymize-tokenize
+  - schema-level-segregation
+  options_eliminated: []
+  response: schema-level-segregation
+  response_type: single-select
+  source: inferred
+  activates: []
+  notes: Audience PII (device IDs, hashed emails) in separate DynamoDB table; never
+    embedded in vector store; GDPR erasure = delete table records, no re-indexing
+- slug_id: audit-logging
+  area: Security, Privacy & Compliance
+  question: What audit logging layers are implemented for autonomous agent actions?
+  options_presented:
+  - cloudwatch-otel-primary
+  - dynamodb-immutable-audit
+  - human-confirmation-log
+  options_eliminated: []
+  response:
+  - cloudwatch-otel-primary
+  - dynamodb-immutable-audit
+  - human-confirmation-log
+  response_type: multi-select
+  source: inferred
+  activates: []
+  notes: 'Three layers: CloudWatch OTEL (engineering/ops), DynamoDB immutable audit
+    (SOC2 reviewers), human confirmation log (marketing managers + HITL audit trail)'
+- slug_id: orchestration-pattern
+  area: Agentic AI Design
+  question: Which orchestration pattern drives the campaign decision loop?
+  options_presented:
+  - sequential-pipeline
+  - event-triggered-react-loop
+  - plan-and-execute
+  - hierarchical-orchestrator-workers
+  options_eliminated: []
+  response: event-triggered-react-loop
+  response_type: single-select
+  source: inferred
+  activates: []
+  notes: 'Event-triggered ReAct: cheap monitor loop continuously runs (Haiku); on
+    CPC breach, triggers Reason+Act loop with Claude Sonnet. Structural HITL gate
+    at LangGraph conditional edge.'
+- slug_id: campaign-data-model
+  area: Data & RAG Architecture
+  question: How should campaign performance data be stored and queried?
+  options_presented:
+  - aurora-serverless-postgres-plus-dynamo
+  - rds-postgres-plus-dynamo
+  - dynamodb-only
+  options_eliminated: []
+  response: aurora-serverless-postgres-plus-dynamo
+  response_type: single-select
+  source: inferred
+  activates: []
+  notes: Aurora Serverless PostgreSQL for campaign metrics (SQL aggregations, auto-scaling)
+    + DynamoDB for session/audit. Exact split prescribed by aws-native-services v2
+    playbook.
+- slug_id: brand-guidelines-ingestion
+  area: Data & RAG Architecture
+  question: How should brand guideline documents be ingested and made available to
+    RAG?
+  options_presented:
+  - bedrock-kb-managed
+  - s3-custom-oss-pipeline
+  - hybrid-structured-rules-plus-vector
+  options_eliminated: []
+  response: hybrid-structured-rules-plus-vector
+  response_type: single-select
+  source: inferred
+  activates: []
+  notes: Hard rules (prohibited keywords, spend caps) extracted to Aurora PostgreSQL
+    for deterministic lookup; brand guideline prose vectorized in OpenSearch Serverless
+    for semantic retrieval.
+- slug_id: compute-platform
+  area: Deployment & Observability
+  question: Where should the agent backend be deployed on AWS?
+  options_presented:
+  - agentcore-runtime
+  - ecs-fargate
+  options_eliminated: []
+  response: agentcore-runtime
+  response_type: single-select
+  source: user
+  activates: []
+  notes: AgentCore Runtime — managed serverless agent runtime, per-session microVM
+    isolation, native LangGraph support, built-in MCP gateway and OTEL observability
+    to CloudWatch
+- slug_id: monitoring-strategy
+  area: Deployment & Observability
+  question: What observability stack monitors the agent loop, RAG queries, and MCP
+    tool calls?
+  options_presented:
+  - cloudwatch-agentcore-observability
+  - cloudwatch-otel-manual
+  options_eliminated: []
+  response: cloudwatch-agentcore-observability
+  response_type: single-select
+  source: inferred
+  activates: []
+  notes: AgentCore Observability auto-emits per-step OTEL traces to CloudWatch — intent,
+    retrieval, MCP tool call, LLM call, tokens, cost. Satisfies CC-SOC2-002 audit
+    trail with zero additional instrumentation.
+- slug_id: cost-management
+  area: Deployment & Observability
+  question: How are LLM token costs managed in a multi-tenant SaaS?
+  options_presented:
+  - per-tenant-token-budgets
+  - tiered-model-routing
+  - prompt-caching
+  - cost-tagging-dashboards
+  options_eliminated: []
+  response:
+  - per-tenant-token-budgets
+  - tiered-model-routing
+  - prompt-caching
+  response_type: multi-select
+  source: inferred
+  activates: []
+  notes: 'Three strategies combined: per-tenant token budgets with max-iteration guard
+    (mandatory for SaaS), tiered model routing (Haiku for detection, Sonnet for decisions),
+    Bedrock prompt caching (20-50% reduction on polling workloads)'
+- slug_id: deployment-pattern
+  area: Deployment & Observability
+  question: What release strategy for new agent versions?
+  options_presented:
+  - canary-release
+  - blue-green
+  - rolling-update
+  options_eliminated: []
+  response: canary-release
+  response_type: single-select
+  source: user
+  activates: []
+  notes: Canary release — route 5-10% of tenants to new agent version; measure CPC
+    improvement + action success rate before promoting. AgentCore Gateway traffic-split
+    qualifiers support this.
+- slug_id: frontend-compute-platform
+  area: Deployment & Observability
+  question: Where should the React dashboard frontend be deployed?
+  options_presented:
+  - aws-amplify-hosting
+  - ecs-fargate
+  - s3-cloudfront
+  options_eliminated: []
+  response: aws-amplify-hosting
+  response_type: single-select
+  source: user
+  activates: []
+  notes: AWS Amplify Hosting — managed CDN for React SPA, automatic HTTPS, integrates
+    with Cognito auth, AAH harness supports Amplify deployment path
 deferred_ideas: []
 constraint_audit:
   passed: null
