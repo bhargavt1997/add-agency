@@ -1,0 +1,283 @@
+# Risk, Security & Compliance
+## Agentic Campaign Orchestrator
+
+**Phase:** architecture · **Iteration:** 1 · **Authored:** 2026-08-02  
+**Inputs:** `decision-registry.yaml`, `discuss-prd.md`, `module-map.yaml`, `cloud-readiness.yaml`
+
+---
+
+## 1. Compliance Regimes
+
+| Regime | Applicability | Key Controls |
+|---|---|---|
+| **SOC2 Type II** | All tenants | Logical access control (CC-SOC2-001), audit logging (CC-SOC2-002), change management |
+| **GDPR** | EU tenants (and any tenant with EU-resident audience data) | Lawful basis, data residency, right to erasure, data minimisation, PII protection |
+
+---
+
+## 2. Authentication & Access Control (SOC2 CC-SOC2-001)
+
+### 2.1 Authentication
+
+| Component | Mechanism |
+|---|---|
+| User authentication | AWS Cognito User Pool (OIDC / OAuth 2.0 Authorization Code flow) |
+| Token type | JWT (ID token + Access token); 1-hour expiry; refresh token 30-day TTL |
+| API auth | `Authorization: Bearer <access_token>`; FastAPI middleware verifies Cognito JWKS signature |
+| MCP server auth | IAM role (AgentCore-to-MCP calls use AgentCore execution role); no external JWT on MCP servers |
+
+### 2.2 Subscription Tier Enforcement
+
+Tiers are encoded as Cognito User Groups (`observer`, `copilot`, `autopilot`). Group membership flows into the JWT `cognito:groups` claim.
+
+**Server-side enforcement (authoritative):**
+```python
+# FastAPI dependency
+async def require_tier(min_tier: str, token: str = Depends(get_jwt)):
+    tier = token.claims["cognito:groups"][0]
+    if TIER_RANK[tier] < TIER_RANK[min_tier]:
+        log_access_denied(tier, endpoint, tenant_id)  # CloudWatch
+        raise HTTPException(403)
+    log_access_granted(tier, endpoint, tenant_id)  # CloudWatch
+```
+
+**Client-side tier gating (UX only, not security):**  
+React reads JWT group claim → conditionally renders/disables UI elements. Client gate can be bypassed; server gate cannot.
+
+### 2.3 Multi-Tenant Data Isolation
+
+| Layer | Mechanism | Enforced By |
+|---|---|---|
+| PostgreSQL | Row-Level Security policy on `tenant_id` column | Aurora PostgreSQL engine |
+| DynamoDB | Partition key: `tenant_id` or `tenant_id#resource_id` | Application + IAM condition |
+| OpenSearch | Index-per-tenant: `tenant-{id}-brand-guidelines` | Application routing |
+| AgentCore | `tenant_id` in LangGraph state; per-session microVM | AgentCore Runtime |
+| API | `tenant_id` extracted from JWT; injected as session variable for RLS | FastAPI middleware |
+
+**RLS activation (every DB connection):**
+```sql
+SET app.current_tenant_id = '<jwt_tenant_id>';
+-- All subsequent queries on RLS-enabled tables are automatically scoped
+```
+
+---
+
+## 3. Audit Logging (SOC2 CC-SOC2-002)
+
+### 3.1 Audit Trail Architecture
+
+Three complementary audit stores (defence-in-depth):
+
+| Store | What It Captures | Immutability | Retention |
+|---|---|---|---|
+| **DynamoDB action-audit** | Every autonomous action (type, trigger, decision JSON, outcome, agent version, timestamp) | Append-only (no UpdateItem/DeleteItem IAM) | 7 years (SOC2) |
+| **DynamoDB human-confirmations** | Every approval/rejection (approver Cognito sub, action payload, decision_at) | GDPR-erasable (soft-delete via deleted_at, TTL 30d) | 30 days (GDPR) |
+| **CloudWatch structured logs** | Every API request, tier-enforcement decision, access granted/denied | CloudWatch WORM (no delete permission for app role) | 1 year (configurable) |
+
+### 3.2 Audit Record Schema (action-audit)
+
+```
+{
+  action_id:        KSUID (time-sortable),
+  tenant_id:        UUID,
+  action_type:      pause_ad_set | reallocate_budget | update_bid_cap | resume_ad_set,
+  ad_set_id:        UUID,
+  campaign_id:      UUID,
+  trigger_cpc:      float,
+  baseline_cpc:     float,
+  breach_pct:       float,
+  decision_json:    Decision object (full),
+  status:           executed | queued | approved | rejected,
+  approver_id:      Cognito user sub (null if auto-executed),
+  spend_delta:      float,
+  agent_version:    LangGraph state graph version hash,
+  executed_at:      ISO 8601,
+  network:          google_ads | meta
+}
+```
+
+### 3.3 CloudWatch Access Log Schema
+
+```json
+{
+  "level": "INFO",
+  "event": "api_access",
+  "tenant_id": "uuid",
+  "endpoint": "/api/v1/confirmations/...",
+  "method": "POST",
+  "tier": "copilot",
+  "allowed": true,
+  "cognito_sub": "user-sub",
+  "ts": "ISO8601",
+  "latency_ms": 42
+}
+```
+
+---
+
+## 4. Data Privacy & GDPR
+
+### 4.1 PII Handling Strategy
+
+| PII Type | Location | Control |
+|---|---|---|
+| Audience targeting identifiers (hashed emails, custom audience IDs) | DynamoDB `pii-audience` table only | IAM-gated (separate `pii-service` role); never in RAG corpus |
+| Brand guidelines documents | OpenSearch after ingest | AWS Comprehend PII scan blocks ingest if PII detected |
+| Action audit (approver IDs) | DynamoDB `human-confirmations` | GDPR-erasable; soft-delete + 30-day TTL hard-delete |
+| Campaign metric data (no personal data) | Aurora `campaign_metrics_timeseries` | No PII; standard RLS isolation |
+
+### 4.2 PII Detection Pipeline
+
+```
+[Brand guidelines upload]
+        │
+        ▼
+[AWS Comprehend DetectPiiEntities]
+        │
+   PII detected?
+   YES → 422 Unprocessable Entity (block ingest, log attempt to CloudWatch)
+   NO  → proceed to chunking → Titan embedding → OpenSearch index
+```
+
+**Bedrock Guardrails at LLM inference:** PII redaction enabled — any PII that escapes the ingest-time check is redacted before the LLM sees it.
+
+### 4.3 Data Residency
+
+| Tenant Type | Primary Region | Data Stores | Legal Basis |
+|---|---|---|---|
+| EU tenants | `eu-west-1` (Ireland) / `eu-central-1` (Frankfurt) | Aurora EU cluster, DynamoDB EU, OpenSearch EU, AgentCore EU endpoint | GDPR Art. 45 (adequacy decision — EU regions are adequate) |
+| Non-EU tenants | `us-east-1` | US region stores | Standard Contractual Clauses (SCCs) if EU data transferred |
+
+Tenant routing enforced at FastAPI middleware using `tenant.eu_data_residency` flag set at tenant onboarding.
+
+### 4.4 Right to Erasure (GDPR Art. 17)
+
+**Process:**
+1. `DELETE /api/v1/tenants/{id}/gdpr-erasure` → soft-delete all Aurora records (`deleted_at = now()`)
+2. DynamoDB `human-confirmations` + `pii-audience`: set `deleted_at` attribute; TTL = `now() + 30 days` → DynamoDB auto-hard-deletes
+3. OpenSearch: delete all documents in `tenant-{id}-brand-guidelines` index immediately
+4. AgentCore Memory: invalidate all memories for `tenant_id`
+5. **DynamoDB `action-audit`:** CANNOT be erased (SOC2 immutability requirement). Erasure request itself is logged as an audit event. GDPR balancing: legitimate interest / legal obligation basis overrides erasure for audit records.
+6. Hard-delete of Aurora records scheduled by background sweeper after 30 days
+
+**SLA:** Soft-delete immediate; hard-delete within 30 days (GDPR Art. 17 compliant).
+
+### 4.5 Data Minimisation
+
+| Data Point | Collected | Why |
+|---|---|---|
+| Campaign metrics (CPC/CTR/ROAS) | Yes | Core product function |
+| Ad creative content | No | Not stored — only brand guidelines (user-provided) |
+| Audience personal data (name, email) | No — hashed IDs only | Only audience_id (opaque) in `pii-audience` |
+| User identity beyond Cognito sub | No | Cognito sub only (no name/email stored in app DB) |
+| LLM prompts/responses | No (not persisted) | Reasoning trace in AgentCore session state only; no long-term storage |
+
+---
+
+## 5. Threat Model
+
+### 5.1 Identified Threats
+
+| Threat | Attack Vector | Mitigation |
+|---|---|---|
+| **Cross-tenant data leak** | Compromised JWT + direct SQL query | Aurora RLS; FastAPI session var enforcement; DynamoDB partition key |
+| **Unauthorized action execution** | Bypassing Co-Pilot approval gate | Server-side tier check on every API call; spend-delta gate in agent (not UI) |
+| **PII exfiltration via RAG** | Injecting PII into brand guidelines → RAG → LLM response | Comprehend PII scan at ingest; Bedrock Guardrails PII redaction at inference |
+| **Prompt injection via campaign data** | Malicious campaign name/creative influencing LLM decision | Bedrock Guardrails content policy; structured JSON output enforcement (no free-form execution) |
+| **Budget manipulation** | Attacker triggers large budget reallocations | $500 spend-delta gate; always-require-approval for campaign pause; human confirmation queue |
+| **Token budget exhaustion (DoS)** | Tenant exhausts LLM token budget → billing shock | Per-tenant token budget middleware; 429 throttle at budget limit; CloudWatch alarm |
+| **Credential leakage via audit log** | Audit log contains secrets | No secrets stored in audit log; only decision JSON (no API keys, no tokens) |
+| **Audit log tampering** | Attacker modifies action history | DynamoDB append-only IAM (no UpdateItem/DeleteItem); CloudWatch WORM |
+
+### 5.2 IAM Threat Boundary
+
+```
+AgentCore execution role:
+  ALLOW: bedrock:InvokeModel, aoss:*, rds-data:ExecuteStatement (Aurora), dynamodb:GetItem/PutItem (scoped by condition)
+  DENY: dynamodb:UpdateItem on action-audit, dynamodb:DeleteItem on action-audit
+
+FastAPI execution role:
+  ALLOW: cognito-idp:GetUser, dynamodb:GetItem/PutItem/UpdateItem (human-confirmations, session-state)
+  DENY: pii-audience (requires pii-service role)
+
+pii-service role (separate process):
+  ALLOW: dynamodb:* on pii-audience table
+  DENY: all other tables
+```
+
+---
+
+## 6. Bedrock Guardrails Configuration
+
+Per-tenant guardrail policy stored in Bedrock Guardrails + mirrored in Aurora `brand_rules`:
+
+| Parameter | Default | User-Configurable |
+|---|---|---|
+| PII redaction | Enabled (all PII entity types) | Toggle per entity type |
+| Denied topics | [`competitor_campaigns`, `political_content`] | Add/remove topics |
+| Content thresholds (HATE/VIOLENCE/etc.) | MEDIUM block | LOW / MEDIUM / HIGH |
+| Grounding check (faithfulness to context) | Enabled | Disabled (advanced) |
+
+Guardrail is applied at TWO points:
+1. At Reason agent LLM inference (protect decision generation)
+2. At brand guidelines ingest (complementary to Comprehend; belt-and-suspenders)
+
+---
+
+## 7. Agent-Specific Security Controls
+
+### 7.1 Decision Integrity
+
+- LLM output is validated against `Decision` Pydantic schema before any action is taken (reject malformed JSON)
+- Action vocabulary is closed: only `pause_ad_set | resume_ad_set | reallocate_budget | update_bid_cap | no_action`
+- Any action outside this vocabulary is rejected at the guardrail check node
+
+### 7.2 MCP Tool Scoping (Principle of Least Privilege)
+
+Mock MCP servers (MVP) enforce tool-level scoping:
+- `reallocate_budget`: maximum transfer amount validated server-side (`amount_usd ≤ campaign.daily_budget * 0.5`)
+- `update_bid_cap`: maximum decrease validated (`new_bid_cap ≥ current_bid_cap * 0.80`, i.e., max 20% decrease)
+- All tools log the requesting `tenant_id` + `session_id` for every invocation
+
+### 7.3 Human-in-the-Loop Anti-Patterns Avoided
+
+| Anti-Pattern | Mitigation |
+|---|---|
+| Agent bypasses confirmation gate | Guardrail check node is deterministic; runs before act_node regardless of LLM output |
+| Confirmation UX summarises poorly (hides impact) | Full Decision JSON + spend_delta + trigger_reason shown in Co-Pilot card |
+| Implicit/ambiguous confirmation | Explicit approve/reject POST (no implicit timeout = approve) |
+| No audit trail tying confirmation to specific user | `approver_id` = Cognito user sub written by server (not client) |
+
+---
+
+## 8. Operational Security
+
+| Control | Implementation |
+|---|---|
+| Secrets management | AWS Secrets Manager for Aurora credentials; Cognito app client secret; no secrets in environment variables in source |
+| Encryption at rest | Aurora: AES-256 (AWS-managed); DynamoDB: AES-256 (AWS-managed); OpenSearch: AWS-managed key |
+| Encryption in transit | TLS 1.2+ for all API, MCP, and data store connections |
+| Dependency scanning | `pip-audit` in CI pipeline; block on CVSS >= 7.0 |
+| SAST | `bandit` in CI pipeline |
+| Container isolation | AgentCore per-session microVM (managed by AWS) |
+| Canary deployment | New agent versions receive 5% traffic; automatic rollback on error rate > 1% |
+
+---
+
+## 9. Provenance
+
+| Section | Origin | Source |
+|---|---|---|
+| 1. Compliance Regimes | Inherited | `decision-registry.yaml → compliance-regimes` |
+| 2.1 Authentication | Inherited | `decision-registry.yaml → auth-strategy` |
+| 2.2 Tier Enforcement | Inherited + Authored | `decision-registry.yaml → tier-gating-pattern`; server/client split authored |
+| 2.3 Tenant Isolation | Inherited | `decision-registry.yaml → multi-tenant-isolation`; per-layer table authored |
+| 3. Audit Logging | Inherited + Authored | `decision-registry.yaml → audit-logging`; schema authored in arch phase |
+| 4.1–4.2 PII Handling | Inherited | `decision-registry.yaml → pii-handling-strategy`, `decision-registry.yaml → data-privacy-controls` |
+| 4.3 Data Residency | Inherited | `decision-registry.yaml → gdpr-data-residency` |
+| 4.4 Erasure | Inherited + Authored | `decision-registry.yaml → gdpr-erasure-strategy`; store-by-store procedure authored |
+| 4.5 Data Minimisation | Authored | Derived from `discuss-prd.md §6` and decisions; minimisation analysis authored |
+| 5. Threat Model | Authored | Adversarial analysis authored in architecture phase; grounded in all security decisions |
+| 6. Bedrock Guardrails | Inherited + Authored | `decision-registry.yaml → data-privacy-controls`; parameter table authored |
+| 7. Agent-Specific Controls | Authored | Derived from `agent-topology.md §3.4`; HITL anti-patterns from ai-applications v2 playbook (researcher findings) |
+| 8. Operational Security | Authored | Synthesised from `decision-registry.yaml → deployment-pattern`, `cloud-readiness.yaml`; operational controls authored |

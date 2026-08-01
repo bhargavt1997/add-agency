@@ -1,0 +1,197 @@
+# module-map.yaml
+# Single source of truth for module segregation, vertical slicing, and execution order.
+# Each module = one stakeholder-demoable vertical slice.
+# MOD-000 is the walking skeleton (non-demoable infra).
+#
+# Written by: /aah-arch Step 4
+# Consumed by: /aah-plan (feature decomposition + wave computation)
+# Path: .aah/architecture/module-map.yaml
+
+modules:
+
+  - id: MOD-000
+    name: Infrastructure Skeleton & Auth Foundation
+    description: >
+      Non-demoable foundational layer. Establishes the Python/FastAPI project scaffold,
+      LangGraph StateGraph TypedDict skeleton, Cognito OIDC/JWT auth stubs, Aurora schema
+      migrations (tenants, campaigns, ad_sets, campaign_metrics_timeseries), DynamoDB
+      table creation (action-audit, session-state, human-confirmations, pii-audience),
+      AgentCore Runtime connection, and React/Vite/Amplify frontend scaffold with
+      working health endpoints on both backend and frontend.
+    demo_criteria: "Backend health endpoint responds 200; React app loads in browser; Cognito login flow completes; Aurora tables and DynamoDB tables created."
+    smoke_test: "curl http://localhost:8000/health && curl http://localhost:3000 && python -m pytest tests/smoke/test_wave_0.py -v"
+    layers:
+      infra:
+        - Python/FastAPI project layout (src/api, src/agent, src/tools, src/rag, src/db, src/ui)
+        - pyproject.toml + uv lockfile
+        - LangGraph StateGraph TypedDict skeleton (CampaignOrchestratorState)
+        - AgentCore Runtime SDK connection and session bootstrap
+        - React 18 + TypeScript + Vite + Shadcn/UI project scaffold
+        - AWS Amplify Hosting zip-upload deploy config
+      db:
+        - Aurora Serverless PostgreSQL schema migrations (Alembic)
+        - Tables: tenants, campaigns, ad_sets, campaign_metrics_timeseries, brand_rules, action_log
+        - Row-Level Security (RLS) policy on tenant_id for all tables
+        - DynamoDB table creation: action-audit (append-only), session-state, human-confirmations, pii-audience
+      api:
+        - FastAPI app with /health, /auth/token (Cognito OIDC exchange), /api/v1/ prefix
+        - Cognito JWT middleware (verify + decode + attach claims to request context)
+        - CORS and baseline error-handler middleware
+    depends_on: []
+    cloud_services: [svc-001, svc-003, svc-004, svc-007, svc-008]
+
+  - id: MOD-001
+    name: Campaign Monitor Agent + Mock MCP Servers
+    description: >
+      The Monitor agent (LangGraph node using a cost-optimised fast model) continuously
+      polls mock Google Ads and Meta MCP servers via FastMCP HTTP/SSE. Computes
+      7-day rolling CPC baseline per ad set. Detects breach when CPC exceeds 20%
+      above baseline. Writes raw campaign metrics to Aurora and fires a breach event
+      on the LangGraph state graph.
+    demo_criteria: "Start monitor agent against mock ad network; inject a CPC spike via the mock API; observe breach event logged to Aurora and printed to AgentCore trace."
+    smoke_test: "python -m pytest tests/smoke/test_wave_1.py -v && curl http://localhost:8001/mcp/google-ads/health && curl http://localhost:8002/mcp/meta/health"
+    layers:
+      agent:
+        - Monitor agent LangGraph node (polls every 60s; cheap fast model for CPC comparison)
+        - CampaignOrchestratorState: campaign_metrics, cpc_baseline, breach_events
+        - 7-day rolling CPC baseline computation (Aurora SQL aggregate)
+        - Breach detection logic: cpc > baseline * 1.20 → append to breach_events
+      tools:
+        - FastMCP Google Ads MCP server (mock) — tools: get_campaign_performance, pause_ad_set, resume_ad_set, reallocate_budget, update_bid_cap
+        - FastMCP Meta MCP server (mock) — same tool surface
+        - Mock data fixture: seeded campaign + ad_set records with realistic CPC/CTR/ROAS time-series
+      db:
+        - Aurora campaign_metrics_timeseries ingestion (upsert per poll cycle)
+        - CPC baseline query: 7-day rolling avg grouped by ad_set_id and tenant_id
+      api:
+        - GET /api/v1/campaigns (list campaigns for a tenant)
+        - GET /api/v1/campaigns/{id}/metrics (current CPC/CTR/ROAS)
+        - POST /api/v1/monitor/start (kick off monitoring loop)
+        - POST /api/v1/monitor/stop
+    depends_on: [MOD-000]
+    cloud_services: [svc-001, svc-003]
+
+  - id: MOD-002
+    name: RAG Reasoning Engine
+    description: >
+      Reason agent (full LLM model, Claude or GPT via provider-agnostic API on Bedrock).
+      Triggered by breach events from MOD-001. Retrieves dual-source context: (1) hybrid
+      semantic + BM25 search against OpenSearch Serverless brand guidelines index (Amazon
+      Titan Text Embeddings v2), and (2) SQL aggregation query against Aurora for exact
+      CPC/CTR/ROAS metrics. Uses AgentCore Memory EPISODIC + SEMANTIC strategies for
+      cross-run recall. Produces a typed JSON decision object with action, target ad_set_id,
+      amount (if budget reallocation), and rationale.
+    demo_criteria: "Feed a simulated breach event; agent retrieves brand guidelines + metrics context; produces a valid typed decision JSON (action, target, rationale)."
+    smoke_test: "python -m pytest tests/smoke/test_wave_2.py -v"
+    layers:
+      agent:
+        - Reason agent LangGraph node (ReAct pattern; invokes retrieval tools before deciding)
+        - CampaignOrchestratorState: retrieved_context, decision, reasoning_trace
+        - Provider-agnostic LLM client (Bedrock Claude / OpenAI GPT switchable via env var)
+        - Prompt caching on recurring system context (Bedrock prompt cache)
+      memory:
+        - AgentCore Memory integration (EPISODIC: past interventions + outcomes; SEMANTIC: brand + channel performance patterns)
+        - Memory retrieval node (injects relevant past decisions into Reason agent context window)
+        - Memory write node (stores outcome after action execution completes — triggered by MOD-003)
+      tools:
+        - OpenSearch Serverless retriever (hybrid k-NN + BM25; index: tenant-{id}-brand-guidelines)
+        - Amazon Titan Text Embeddings v2 encoder (used by retriever + ingest pipeline)
+        - Aurora metrics retriever (SQL: CPC/CTR/ROAS aggregates for breach ad_set + siblings)
+        - Brand guidelines ingest pipeline (chunking → Titan embedding → OpenSearch upsert; triggered by user upload)
+      db:
+        - OpenSearch index creation per tenant (Titan 1536-dim k-NN space)
+        - Aurora brand_rules table (hard rules: lookup by tenant_id)
+    depends_on: [MOD-001]
+    cloud_services: [svc-001, svc-002, svc-003, svc-005]
+
+  - id: MOD-003
+    name: Act Agent, MCP Tool Execution & Approval Queue
+    description: >
+      Act agent executes the typed decision from MOD-002 via the mock MCP servers.
+      Enforces the $500 spend-delta gate (route to DynamoDB confirmation queue if exceeded)
+      and the always-approve rule for campaign-pause. Applies brand keyword protection check.
+      Enforces Bedrock Guardrails at LLM inference. Writes every action (auto or queued)
+      to the immutable DynamoDB action-audit table. Human-confirmation records written
+      to DynamoDB human-confirmations table with approver Cognito user ID.
+    demo_criteria: "End-to-end pipeline: inject breach → reason → one action auto-executes (below $500) → one action queued (above $500). Both visible in action-audit DynamoDB table."
+    smoke_test: "python -m pytest tests/smoke/test_wave_3.py -v"
+    layers:
+      agent:
+        - Act agent LangGraph node
+        - Spend-delta gate: computes delta → if > $500 or campaign-pause → enqueue to DynamoDB
+        - Brand keyword protection check (query brand_rules table before execution)
+        - Bedrock Guardrails call at decision validation point
+        - CampaignOrchestratorState: action_result, audit_record, confirmation_id (if queued)
+      tools:
+        - MCP tool executor: routes to Google Ads or Meta MCP server based on campaign network
+        - MCP tools: pause_ad_set, resume_ad_set, reallocate_budget, update_bid_cap
+      db:
+        - DynamoDB action-audit write (append-only: action_type, trigger_condition, agent_version, timestamp, outcome, tenant_id)
+        - DynamoDB human-confirmations write (action_id, action_payload, spend_delta, status=pending)
+        - DynamoDB human-confirmations update (approver_cognito_id, decision, timestamp on approval/rejection)
+      api:
+        - GET /api/v1/confirmations (list pending approval queue for Co-Pilot tier)
+        - POST /api/v1/confirmations/{id}/approve (approver decision — writes approver_cognito_id)
+        - POST /api/v1/confirmations/{id}/reject
+        - GET /api/v1/audit-log (paginated action audit log for all tiers)
+    depends_on: [MOD-002]
+    cloud_services: [svc-001, svc-004, svc-006]
+
+  - id: MOD-004
+    name: React Dashboard, Real-Time SSE & Co-Pilot Approval UX
+    description: >
+      React 18 + TypeScript + Vite + Shadcn/UI frontend deployed via AWS Amplify Hosting.
+      Campaign health dashboard with live CPC/CTR/ROAS panels (FastAPI SSE time-series stream).
+      Agent action events displayed in real time via AG-UI SSE (typed TOOL_CALL_START,
+      TOOL_CALL_END, RUN_FINISHED events from AgentCore via FastAPI proxy). Co-Pilot
+      action queue with reasoning preview cards (approve/reject). Audit log view (all tiers).
+      Guardrail settings form (campaign rules tab + LLM safety tab mapping to Bedrock
+      Guardrails API). Hybrid client+server tier gating (JWT claims for UX; server enforces).
+    demo_criteria: "Open dashboard; observe live campaign metrics; trigger breach; see agent events stream in real time; approve a queued action as Co-Pilot user; view action in audit log."
+    smoke_test: "python -m pytest tests/smoke/test_wave_4.py -v && curl http://localhost:3000"
+    layers:
+      ui/ux:
+        - Campaign health dashboard (CPC/CTR/ROAS per ad_set, breach indicator)
+        - Real-time metric panels (FastAPI SSE EventSource, auto-reconnect)
+        - Agent event stream panel (AG-UI SSE: TOOL_CALL_START/END typed events, RUN_FINISHED)
+        - Co-Pilot action queue (pending cards: action type + reasoning + projected effect + approve/reject)
+        - Audit log view (chronological; actor = agent or approver_cognito_id; filterable by tier)
+        - Guardrail settings form (tab 1: CPC ceiling, spend cap, pause thresholds; tab 2: Bedrock Guardrails PII/content toggles)
+        - Subscription tier indicator; disabled UI elements for Observer tier
+      api:
+        - GET /api/v1/stream/metrics (FastAPI SSE — campaign metrics time-series, per-tenant)
+        - GET /api/v1/stream/agent-events (FastAPI SSE proxy of AgentCore AG-UI events)
+        - GET /api/v1/guardrails (fetch per-tenant guardrail settings)
+        - PUT /api/v1/guardrails (update guardrail settings → write to Bedrock Guardrails API + Aurora brand_rules)
+    depends_on: [MOD-003]
+    cloud_services: [svc-001, svc-006, svc-008]
+
+  - id: MOD-005
+    name: Multi-Tenant SaaS, GDPR & SOC2 Compliance Layer
+    description: >
+      Full multi-tenant hardening and compliance controls. Cognito User Groups enforce
+      subscription tier (observer, copilot, autopilot). FastAPI server-side tier
+      enforcement with access decision logging to CloudWatch (CC-SOC2-002). GDPR
+      erasure endpoint (soft-delete → 30-day retention → hard-delete). AWS Comprehend
+      PII scan gate on brand guidelines ingest pipeline. PII audience table IAM isolation
+      verified. SOC2 structured audit middleware on all FastAPI routes. Per-tenant token
+      budget enforcement (CloudWatch alarm + FastAPI middleware).
+    demo_criteria: "Log in as Observer → approve button hidden + server returns 403 on confirmation endpoint. Log in as Autopilot → full access. Trigger GDPR erasure → data soft-deleted; hard-delete scheduled. Comprehend PII scan blocks PII-containing brand doc ingest."
+    smoke_test: "python -m pytest tests/smoke/test_wave_5.py -v"
+    layers:
+      infra:
+        - Cognito User Groups: observer, copilot, autopilot (group membership = tier)
+        - Per-tenant token budget middleware (CloudWatch metric; 429 when budget exceeded)
+        - CloudWatch structured audit logging (JSON log format; per-route access decisions)
+        - AWS Comprehend PII detection in brand guidelines ingest pipeline (block on PII detect)
+      db:
+        - Aurora RLS enforcement verification (cross-tenant query blocked at DB layer)
+        - DynamoDB pii-audience IAM policy scoping (deny read to all except pii-service role)
+        - GDPR soft-delete flag + scheduled hard-delete (TTL attribute on DynamoDB records; Aurora soft-delete + background sweeper)
+      api:
+        - DELETE /api/v1/tenants/{id}/gdpr-erasure (GDPR erasure request → soft-delete all tenant data)
+        - GET /api/v1/tenants/{id}/erasure-status (track erasure progress)
+        - POST /api/v1/brand-guidelines/ingest (triggers Comprehend PII scan before OpenSearch ingest)
+        - GET /api/v1/admin/token-usage (per-tenant token consumption)
+    depends_on: [MOD-004]
+    cloud_services: [svc-003, svc-004, svc-007, svc-009]
