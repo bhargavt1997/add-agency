@@ -673,6 +673,51 @@ decisions:
   activates: []
   notes: AWS Amplify Hosting — managed CDN for React SPA, automatic HTTPS, integrates
     with Cognito auth, AAH harness supports Amplify deployment path
+- slug_id: action-log-design
+  area: UI/UX Dashboard
+  question: What is the primary UX pattern for displaying and approving autonomous
+    agent actions?
+  options_presented: []
+  options_eliminated: []
+  response: hybrid-queue-plus-log
+  response_type: single-select
+  source: inferred
+  activates: []
+  notes: Action Queue (pending) + Audit Log (completed); satisfies CC-SOC2-002 HITL
+    and all 3 tier modes
+- slug_id: guardrail-settings-ui
+  area: UI/UX Dashboard
+  question: What is the UI pattern for configuring guardrails?
+  options_presented: []
+  options_eliminated: []
+  response: unified-settings-form
+  response_type: single-select
+  source: inferred
+  activates: []
+  notes: Campaign rules tab + LLM safety tab mapping to Bedrock Guardrails API
+- slug_id: tier-gating-pattern
+  area: UI/UX Dashboard
+  question: How should subscription tier access control be implemented across the
+    dashboard?
+  options_presented: []
+  options_eliminated: []
+  response: hybrid-client-server-gating
+  response_type: single-select
+  source: inferred
+  activates: []
+  notes: JWT claims for client UX; server enforces and logs per CC-SOC2-002; tier
+    source of truth is backend
+- slug_id: notification-design
+  area: UI/UX Dashboard
+  question: How should the dashboard receive real-time updates from the backend?
+  options_presented: []
+  options_eliminated: []
+  response: agui-sse-plus-fastapi-sse
+  response_type: single-select
+  source: inferred
+  activates: []
+  notes: AG-UI SSE for agent action events (typed TOOL_CALL_START/END); plain FastAPI
+    SSE for campaign metrics
 deferred_ideas: []
 constraint_audit:
   passed: null
