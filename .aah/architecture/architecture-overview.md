@@ -4,6 +4,8 @@
 **Phase:** architecture · **Iteration:** 1 · **Authored:** 2026-08-02  
 **Inputs:** `decision-registry.yaml`, `discuss-prd.md`, `module-map.yaml`, `cloud-readiness.yaml`
 
+> **Related Document:** [Product Requirements Document (PRD)](../discuss/discuss-prd.md) · `.aah/discuss/discuss-prd.md`
+
 ---
 
 ## 1. System Purpose
@@ -14,71 +16,54 @@ The Agentic Campaign Orchestrator is an autonomous SaaS platform that acts as a 
 
 ## 2. High-Level Component Map
 
-```
-┌──────────────────────────────────────────────────────────────────────────┐
-│                        Subscriber (Browser)                              │
-│   React 18 + TypeScript + Vite + Shadcn/UI (AWS Amplify Hosting)         │
-│   ┌─────────────────┐  ┌──────────────────┐  ┌──────────────────────┐   │
-│   │ Campaign Health │  │ Co-Pilot Action  │  │ Guardrail Settings   │   │
-│   │ Dashboard (SSE) │  │ Queue (approve/  │  │ Form (campaign rules │   │
-│   │                 │  │ reject)          │  │ + Bedrock Guardrails)│   │
-│   └────────┬────────┘  └────────┬─────────┘  └──────────┬───────────┘   │
-└────────────┼────────────────────┼──────────────────────────┼─────────────┘
-             │ FastAPI SSE        │ REST                      │ REST
-             │ (metrics +         │ (confirmations)           │ (guardrails)
-             │  AG-UI events)     │                           │
-┌────────────▼────────────────────▼──────────────────────────▼─────────────┐
-│                     FastAPI Backend (Python)                              │
-│   ┌───────────────────┐  ┌────────────────────┐  ┌───────────────────┐  │
-│   │ /api/v1/stream/   │  │ /api/v1/confirm-   │  │ /api/v1/guard-    │  │
-│   │  metrics (SSE)    │  │  ations (queue)    │  │  rails (settings) │  │
-│   │  agent-events     │  │                    │  │                   │  │
-│   │  (AG-UI proxy)    │  │                    │  │                   │  │
-│   └───────┬───────────┘  └────────┬───────────┘  └──────────┬────────┘  │
-│           │                       │ DynamoDB read             │ Bedrock   │
-│           │              Cognito JWT middleware                │ Guardrails│
-│           │              Tier gating + access logging         │ API       │
-└───────────┼───────────────────────┼──────────────────────────┼───────────┘
-            │                       │                           │
-            │ AgentCore AG-UI SSE   │                           │
-┌───────────▼───────────────────────┼───────────────────────────┼───────────┐
-│           AWS Bedrock AgentCore Runtime                       │           │
-│   ┌────────────────────────────────────────────────┐         │           │
-│   │         LangGraph StateGraph                   │         │           │
-│   │  ┌───────────┐  ┌───────────┐  ┌───────────┐  │         │           │
-│   │  │ Monitor   │─▶│ Reason    │─▶│ Act       │  │         │           │
-│   │  │ Agent     │  │ Agent     │  │ Agent     │  │         │           │
-│   │  │ (fast LLM)│  │ (full LLM)│  │ (MCP exec)│  │         │           │
-│   │  └─────┬─────┘  └─────┬─────┘  └─────┬─────┘  │         │           │
-│   └────────┼───────────────┼───────────────┼────────┘         │           │
-│            │ MCP           │ RAG retrieval │ MCP tool          │           │
-│            │ poll          │               │ execution         │           │
-└────────────┼───────────────┼───────────────┼──────────────────┼───────────┘
-             │               │               │                   │
-    ┌────────┴──────┐ ┌──────┴───────┐ ┌────┴──────────┐ ┌─────┴──────────┐
-    │  FastMCP      │ │ OpenSearch   │ │ FastMCP       │ │ Bedrock        │
-    │  Google Ads   │ │ Serverless   │ │ Meta Ads      │ │ Guardrails     │
-    │  Mock (8001)  │ │ (vector RAG) │ │ Mock (8002)   │ │ (PII + policy) │
-    └───────────────┘ └──────┬───────┘ └───────────────┘ └────────────────┘
-                             │
-                    ┌────────┴──────────────────────────────┐
-                    │          Data Layer                    │
-                    │  ┌─────────────────────────────────┐  │
-                    │  │ Aurora Serverless PostgreSQL     │  │
-                    │  │ (campaigns, metrics, brand_rules)│  │
-                    │  │ Row-Level Security on tenant_id  │  │
-                    │  └─────────────────────────────────┘  │
-                    │  ┌─────────────────────────────────┐  │
-                    │  │ DynamoDB                        │  │
-                    │  │ (action-audit, session-state,   │  │
-                    │  │  human-confirmations, pii-      │  │
-                    │  │  audience)                      │  │
-                    │  └─────────────────────────────────┘  │
-                    │  ┌─────────────────────────────────┐  │
-                    │  │ AgentCore Memory                │  │
-                    │  │ (EPISODIC + SEMANTIC)           │  │
-                    │  └─────────────────────────────────┘  │
-                    └───────────────────────────────────────┘
+```mermaid
+flowchart TB
+    subgraph Browser["Subscriber Browser · AWS Amplify Hosting"]
+        UI["React 18 + TypeScript + Vite + Shadcn/UI\nDashboard · Action Queue · Guardrail Settings"]
+    end
+
+    subgraph FastAPI["FastAPI Backend · Python"]
+        Endpoints["/stream/metrics · /stream/agent-events\n/confirmations · /guardrails · /auth"]
+        Auth["Cognito JWT Middleware\nTier Gating (observer / copilot / autopilot)\nCloudWatch Audit Logging"]
+    end
+
+    subgraph AgentCore["AWS Bedrock AgentCore Runtime · LangGraph StateGraph"]
+        Mon["Monitor Agent\nHaiku 4.5 · 60s CPC poll"]
+        Rea["Reason Agent\nClaude / GPT · RAG-augmented"]
+        Act["Act Agent\nMCP tool executor"]
+        Mon -->|CPC breach detected| Rea
+        Rea -->|typed Decision JSON| Act
+    end
+
+    subgraph MCPServers["MCP Servers · FastMCP · streamable-http"]
+        GA["Google Ads Mock\n:8001"]
+        Meta["Meta Ads Mock\n:8002"]
+    end
+
+    subgraph DataLayer["Data Layer"]
+        OS["OpenSearch Serverless\nBrand Guidelines · k-NN + BM25 Hybrid"]
+        Aurora["Aurora Serverless PostgreSQL\nMetrics · Campaigns · Brand Rules\nRow-Level Security on tenant_id"]
+        DDB["DynamoDB\nAction Audit · Confirmations · Session State"]
+        Mem["AgentCore Memory\nEPISODIC + SEMANTIC"]
+    end
+
+    Cognito["AWS Cognito\nOIDC / JWT · User Groups"]
+    BGuard["Bedrock Guardrails\nPII Redaction · Content Policy"]
+    Comp["AWS Comprehend\nPII Detection at ingest"]
+
+    Browser <-->|REST + SSE| FastAPI
+    FastAPI --> Cognito
+    FastAPI <-->|AG-UI SSE proxy| AgentCore
+    FastAPI --> DDB
+    Mon <-->|get_campaign_performance| MCPServers
+    Act <-->|pause / reallocate / bid| MCPServers
+    Rea <-->|brand guidelines retrieval| OS
+    Mon --> Aurora
+    Rea --> Aurora
+    Act --> DDB
+    Act <--> Mem
+    Rea <-->|inference guardrails| BGuard
+    OS --> Comp
 ```
 
 ---

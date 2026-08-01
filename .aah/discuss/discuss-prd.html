@@ -1,0 +1,507 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Product Requirements Document — Agentic Campaign Orchestrator</title>
+<link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@300;400;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --dl-green: #86BC25;
+  --dl-neon-green: #86EB22;
+  --dl-blue: #00A3E0;
+  --dl-dark-gray: #282728;
+  --dl-gray: #E6E6E6;
+  --dl-text: #282728;
+  --dl-text-secondary: #555;
+  --dl-white: #FFFFFF;
+  --dl-bg: #f8f8f8;
+  --dl-surface: #FFFFFF;
+  --dl-border: #E0E0E0;
+  --dl-code-bg: #1e1e1e;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: 'Open Sans', sans-serif;
+  font-size: 15px;
+  line-height: 1.7;
+  color: var(--dl-text);
+  background: var(--dl-bg);
+}
+.site-header {
+  background: var(--dl-dark-gray);
+  padding: 0 32px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 72px;
+  position: relative;
+  overflow: hidden;
+}
+.site-header::before {
+  content: '';
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  width: 4px;
+  background: var(--dl-green);
+}
+.header-left {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.header-project {
+  font-size: 11px;
+  font-weight: 300;
+  color: rgba(255,255,255,0.6);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.header-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--dl-white);
+}
+.header-motif {
+  position: absolute;
+  right: 0;
+  top: 0;
+  width: 100px;
+  height: 100%;
+  overflow: hidden;
+  opacity: 0.18;
+}
+.accent-bar {
+  height: 4px;
+  background: var(--dl-green);
+  width: 100%;
+}
+.site-nav {
+  background: var(--dl-dark-gray);
+  border-top: 1px solid rgba(255,255,255,0.08);
+  padding: 0 32px;
+  display: flex;
+  gap: 0;
+  overflow-x: auto;
+}
+.site-nav a {
+  display: block;
+  padding: 12px 16px;
+  font-size: 12px;
+  font-weight: 600;
+  color: rgba(255,255,255,0.55);
+  text-decoration: none;
+  white-space: nowrap;
+  border-bottom: 3px solid transparent;
+  transition: color 0.15s, border-color 0.15s;
+  letter-spacing: 0.02em;
+}
+.site-nav a:hover { color: var(--dl-white); }
+.site-nav a.nav-active {
+  color: var(--dl-green);
+  border-bottom-color: var(--dl-green);
+}
+.content-wrap {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 40px 32px 80px;
+}
+#content h1 {
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--dl-dark-gray);
+  margin-bottom: 4px;
+  padding-bottom: 12px;
+  border-bottom: 2px solid var(--dl-green);
+}
+#content h2 {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--dl-dark-gray);
+  margin-top: 40px;
+  margin-bottom: 14px;
+  padding-left: 14px;
+  border-left: 4px solid var(--dl-green);
+}
+#content h3 {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--dl-dark-gray);
+  margin-top: 28px;
+  margin-bottom: 10px;
+  padding-left: 10px;
+  border-left: 3px solid var(--dl-gray);
+}
+#content h4 {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--dl-text-secondary);
+  margin-top: 20px;
+  margin-bottom: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+#content p { margin-bottom: 14px; color: var(--dl-text); }
+#content a { color: var(--dl-blue); text-decoration: none; }
+#content a:hover { text-decoration: underline; }
+#content ul, #content ol { margin: 10px 0 14px 24px; }
+#content li { margin-bottom: 5px; }
+#content strong { font-weight: 700; }
+#content em { font-style: italic; }
+#content hr {
+  border: none;
+  border-top: 1px solid var(--dl-border);
+  margin: 32px 0;
+}
+#content table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 20px 0;
+  font-size: 13.5px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.07);
+  border-radius: 6px;
+  overflow: hidden;
+}
+#content thead tr { background: var(--dl-dark-gray); color: var(--dl-white); }
+#content thead th {
+  padding: 11px 14px;
+  text-align: left;
+  font-weight: 600;
+  font-size: 12px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+#content tbody tr { border-bottom: 1px solid var(--dl-border); }
+#content tbody tr:nth-child(even) { background: #f4f9ee; }
+#content tbody tr:hover { background: #eef7e1; }
+#content td { padding: 10px 14px; vertical-align: top; }
+#content pre {
+  background: var(--dl-code-bg);
+  color: #d4d4d4;
+  border-radius: 6px;
+  padding: 18px 20px;
+  overflow-x: auto;
+  font-size: 13px;
+  line-height: 1.6;
+  margin: 16px 0;
+  border-left: 3px solid var(--dl-green);
+}
+#content code {
+  font-family: 'Cascadia Code', 'Fira Code', 'Consolas', monospace;
+  font-size: 0.88em;
+}
+#content p code, #content li code, #content td code {
+  background: #f0f0f0;
+  color: #c7254e;
+  padding: 1px 5px;
+  border-radius: 3px;
+  font-size: 0.87em;
+}
+#content pre code {
+  background: none;
+  color: inherit;
+  padding: 0;
+  border-radius: 0;
+  font-size: inherit;
+}
+#content blockquote {
+  border-left: 4px solid var(--dl-green);
+  padding: 10px 16px;
+  margin: 16px 0;
+  background: #f4f9ee;
+  color: var(--dl-text-secondary);
+  border-radius: 0 4px 4px 0;
+}
+.site-footer {
+  border-top: 1px solid var(--dl-border);
+  padding: 20px 32px;
+  text-align: right;
+  font-size: 11px;
+  color: #999;
+  background: var(--dl-white);
+  max-width: 1100px;
+  margin: 0 auto;
+}
+.phase-badge {
+  display: inline-block;
+  background: var(--dl-green);
+  color: var(--dl-white);
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 12px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  margin-bottom: 20px;
+}
+</style>
+</head>
+<body>
+<header class="site-header">
+  <div class="header-left">
+    <span class="header-project">Agentic Campaign Orchestrator · Discuss Phase</span>
+    <span class="header-title">Product Requirements Document</span>
+  </div>
+  <svg class="header-motif" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <circle cx="80" cy="50" r="70" stroke="#86BC25" stroke-width="2" fill="none"/>
+    <circle cx="80" cy="50" r="45" stroke="#86BC25" stroke-width="1.5" fill="none"/>
+  </svg>
+</header>
+<div class="accent-bar"></div>
+<nav class="site-nav">
+<a href="./discuss-prd.html" class="nav-active">PRD</a>
+<a href="../architecture/architecture-overview.html" >Architecture Overview</a>
+<a href="../architecture/agent-topology.html" >Agent Topology</a>
+<a href="../architecture/data-model.html" >Data Model</a>
+<a href="../architecture/application-flow.html" >Application Flow</a>
+<a href="../architecture/api-interface-contract.html" >API Contract</a>
+<a href="../architecture/risk-security-compliance.html" >Risk &amp; Security</a>
+</nav>
+<div class="content-wrap">
+  <div id="content"></div>
+</div>
+<div class="site-footer">
+  Confidential — Discuss Phase, Iteration 1 &nbsp;·&nbsp; 2026-08-02 &nbsp;·&nbsp; Deloitte
+</div>
+<script type="text/plain" id="md">
+# Product Requirements Document
+## Agentic Campaign Orchestrator
+
+**Phase:** discuss · **Iteration:** 1 · **Status:** approved
+**Authored:** 2026-08-02 · **Registry:** `.aah/discuss/decision-registry.yaml`
+
+---
+
+## 1. Problem Statement
+
+Marketing managers, media buyers, and agencies spend thousands of dollars monthly on Google Ads and Meta campaigns, but campaign performance degrades in real time — cost-per-click (CPC) spikes, budgets drain into underperforming ad sets, and human analysts only review dashboards once or twice a day. By the time a person intervenes, significant spend has been wasted. No autonomous system today continuously monitors campaigns, reasons about why performance degraded, and takes corrective action within minutes — safely, with full audit trails, and within user-defined brand guardrails.
+
+---
+
+## 2. Solution
+
+The **Agentic Campaign Orchestrator** is a Python-based, AWS-native SaaS product that acts as an autonomous digital media buyer. It is deployed on **AWS Bedrock AgentCore Runtime** using a **3-agent supervisor topology** (Monitor → Reason → Act), orchestrated via LangGraph's event-triggered ReAct loop.
+
+### How It Works
+
+1. **Monitor Agent** (cost-optimised fast model, runs continuously): polls campaign performance every cycle from Google Ads and Meta via **FastMCP HTTP/SSE servers** (one per ad network). Detects when CPC breaches **20% above its 7-day rolling baseline**.
+
+2. **Reason Agent** (Claude or GPT via provider-agnostic API, Bedrock-hosted): triggered on breach detection. Retrieves context from two stores simultaneously:
+   - **SQL query against Aurora Serverless PostgreSQL** — exact CPC/CTR/ROAS aggregates for the affected campaign
+   - **Hybrid RAG retrieval against OpenSearch Serverless** — semantic search for brand guidelines (Amazon Titan Text Embeddings v2) + deterministic rule lookup for hard constraints
+   - Uses **Bedrock AgentCore Memory** (EPISODIC + SEMANTIC strategies) to recall past campaign interventions and their outcomes
+
+3. **Act Agent** (MCP execution layer): executes the decided action via one of four MCP tools: `pause_ad_set`, `resume_ad_set`, `reallocate_budget`, `update_bid_cap`. Actions that exceed the **$500 spend-delta threshold** or target an entire campaign always route to the human confirmation queue, regardless of tier.
+
+### Subscription Tiers
+
+| Tier | Price | Capability |
+|---|---|---|
+| **Observer** | $99/mo | Monitor + alerts + read-only action log |
+| **Co-Pilot** | $299/mo | Agent proposes actions → in-app approval queue + push notifications |
+| **Autopilot** | $799/mo | Fully autonomous within guardrails; all actions logged |
+
+---
+
+## 3. User Stories
+
+1. As a **marketing manager**, I want the system to detect when a campaign's CPC exceeds its 7-day rolling baseline by 20%, so that I am alerted before significant budget is wasted.
+
+2. As a **Co-Pilot subscriber**, I want to see the agent's proposed actions (with the reasoning and projected effect) in an approval queue, so that I can approve or reject with one click, with my identity recorded against the decision.
+
+3. As a **media buyer on Autopilot**, I want the agent to autonomously pause underperforming ad sets and reallocate budget within my guardrail settings, so that my campaigns self-optimise overnight.
+
+4. As a **campaign analyst**, I want an audit log of every action taken — trigger condition, agent reasoning, before/after CPC, and the human approver ID where applicable — so that I can review and trust the agent's decision history.
+
+5. As an **agency account manager**, I want to set brand-keyword protection lists and a per-client spend-delta approval threshold, so that the agent never takes actions that violate client brand guidelines.
+
+6. As a **platform subscriber**, I want to choose my subscription tier and upgrade seamlessly, so that I can start with visibility and graduate to full automation without re-onboarding.
+
+---
+
+## 4. Technical Architecture
+
+### 4.1 Agent Framework
+
+- **Orchestration:** LangGraph `StateGraph` (TypedDict state)
+- **Pattern:** Event-triggered ReAct loop (Monitor → Reason → Act)
+- **Topology:** 3-agent supervisor in a single process; Monitor is always running, Reason+Act spawn on breach
+- **Runtime:** AWS Bedrock AgentCore Runtime (managed serverless, per-session microVM isolation, MCP gateway)
+- **LLM:** Provider-agnostic — Claude (Bedrock-hosted) or GPT API; model routing selectable at tenant level
+
+### 4.2 MCP Layer
+
+- **Framework:** FastMCP (Python), HTTP/SSE transport
+- **Topology:** One MCP server per ad network (Google Ads MCP, Meta MCP)
+- **Tools defined:**
+  - `get_campaign_performance(campaign_id, date_range)` → CPC/CTR/ROAS metrics
+  - `pause_ad_set(ad_set_id)` / `resume_ad_set(ad_set_id)`
+  - `reallocate_budget(source_ad_set_id, target_ad_set_id, amount_usd)`
+  - `update_bid_cap(ad_set_id, new_bid_cap)`
+- **MVP scope:** Mock ad network APIs (no live Google/Meta accounts required)
+
+### 4.3 RAG Architecture
+
+- **Vector store:** OpenSearch Serverless (k-NN + BM25 hybrid search)
+- **Embedding model:** Amazon Titan Text Embeddings v2
+- **Relational store:** Aurora Serverless PostgreSQL (CPC/CTR/ROAS time-series, brand hard rules)
+- **RAG strategy:** Hybrid — semantic search (brand guidelines) + deterministic SQL lookup (campaign metrics + hard rules)
+- **Ingestion:** Hybrid structured rules (SQL import) + unstructured guidelines (vector ingest)
+
+### 4.4 Memory
+
+- **Strategy:** Hybrid in-context + AgentCore Memory
+- **EPISODIC memory:** past campaign interventions and outcomes (cross-run recall)
+- **SEMANTIC memory:** distilled learnings about brand + channel performance patterns
+- **Prompt caching:** Bedrock prompt caching on Monitor agent's recurring context (20–50% token reduction)
+
+### 4.5 Data Architecture
+
+| Store | Purpose | Isolation |
+|---|---|---|
+| Aurora Serverless PostgreSQL | Campaign metrics (CPC/CTR/ROAS), brand hard rules, tenant configs | Row-Level Security on `tenant_id` |
+| OpenSearch Serverless | Brand guidelines vector index (RAG corpus) | Index-per-tenant |
+| DynamoDB | Session state, action audit log (immutable), human confirmation records | Partition key = `tenant_id` |
+| Bedrock AgentCore Memory | EPISODIC + SEMANTIC cross-run campaign learnings | AgentCore-managed isolation |
+
+### 4.6 Frontend
+
+- **Framework:** React 18 + TypeScript + Vite + Shadcn/UI
+- **Hosting:** AWS Amplify Hosting (CDN, auto-HTTPS, static SPA zip-upload)
+- **Real-time updates:**
+  - Agent action events: AG-UI SSE (AgentCore native — typed `TOOL_CALL_START`, `TOOL_CALL_END`, `RUN_FINISHED` events) via FastAPI proxy
+  - Campaign metric panels: plain FastAPI SSE endpoint (time-series data)
+- **Key views:**
+  - Campaign health dashboard (live CPC, CTR, ROAS per ad set)
+  - Action queue (Co-Pilot: pending approve/reject with reasoning preview)
+  - Audit log (all tiers: completed actions with actor + outcome)
+  - Guardrail settings (unified form: campaign rules tab + LLM safety tab → Bedrock Guardrails)
+
+### 4.7 Backend API
+
+- **Framework:** Python FastAPI
+- **Auth:** AWS Cognito OIDC/JWT; subscription tier encoded in user groups
+- **Tier gating:** Hybrid — JWT claims for client UX; server enforces + logs every access decision
+
+---
+
+## 5. Guardrails & Safety
+
+### Autonomous Action Scope (Autopilot)
+
+| Action | Allowed | Approval Required |
+|---|---|---|
+| Pause / resume an ad set | ✅ | Only if spend delta > $500 |
+| Reallocate budget between ad sets | ✅ | Only if spend delta > $500 |
+| Adjust bid cap (≤20% decrease) | ✅ | Only if spend delta > $500 |
+| Pause entire campaign | ❌ | Always requires human approval |
+
+### Brand Protection
+
+- User-defined **protected keyword list** per account — agent never modifies ad sets containing protected keywords without approval
+- **Bedrock Guardrails** enforce PII redaction and content policy at both RAG ingest and LLM inference layers
+
+---
+
+## 6. Security & Compliance
+
+### Authentication & Access Control
+
+- **Auth:** AWS Cognito (OIDC/JWT) — subscription tiers as Cognito User Groups
+- **Multi-tenant isolation:**
+  - PostgreSQL Row-Level Security (RLS) on `tenant_id`
+  - DynamoDB partition keys: `tenant_id#resource_id`
+  - OpenSearch: index-per-tenant
+  - Per-tool IAM scoping on AgentCore
+
+### GDPR
+
+- **Data residency:** EU tenants default to `eu-west-1` / `eu-central-1`; non-EU with SCCs as legal basis
+- **Erasure:** Soft-delete on request → hard-delete after 30 days
+- **PII schema segregation:** Audience identifiers stored in a separate IAM-gated DynamoDB table; never included in the RAG corpus
+- **Ingest-layer PII detection:** AWS Comprehend scans brand guidelines before vector ingest; Bedrock Guardrails redact at LLM layer
+
+### SOC2
+
+- **Audit trail:**
+  - CloudWatch + AgentCore OTEL (primary operational logs)
+  - DynamoDB immutable action audit table (action type, trigger condition, agent version, timestamp — append-only)
+  - Human confirmation log (action ID, approver Cognito user ID, timestamp, decision)
+- **Access logging:** FastAPI middleware logs every tier-gated API call to CloudWatch
+
+---
+
+## 7. Deployment & Infrastructure
+
+- **Agent runtime:** AWS Bedrock AgentCore Runtime (serverless, auto-scaling, per-session microVM)
+- **Frontend:** AWS Amplify Hosting (global CDN, static SPA zip-upload)
+- **Deployment strategy:** Canary release for agent version updates (gradual traffic shift, automatic rollback on error rate threshold)
+- **Observability:** CloudWatch dashboards, AgentCore built-in observability, per-tenant token-budget alarms
+- **Cost controls:**
+  - Per-tenant token budgets (enforced at FastAPI middleware)
+  - Tiered model routing (cheaper model for Monitor; full model for Reason)
+  - Bedrock prompt caching on Monitor agent's recurring system context
+
+---
+
+## 8. Success Metrics
+
+| Metric | Target (MVP) |
+|---|---|
+| CPC reduction (Autopilot vs control) | ≥15% reduction within 7 days |
+| ROAS improvement | ≥10% improvement vs baseline |
+| Time-to-detect-and-act (breach → action) | <5 minutes end-to-end |
+| Actions taken + outcome accuracy | ≥80% of autonomous actions validated correct in audit review |
+| CPC breach false-positive rate | <10% |
+
+---
+
+## 9. Integration Surface
+
+| System | Type | MVP |
+|---|---|---|
+| Google Ads API | External ad network | Mock (FastMCP server) |
+| Meta (Facebook) Ads API | External ad network | Mock (FastMCP server) |
+| OpenSearch Serverless | Vector store | AWS managed |
+| Aurora Serverless PostgreSQL | Relational store | AWS managed |
+| DynamoDB | Session/audit store | AWS managed |
+| Bedrock AgentCore Runtime | Agent runtime | AWS managed |
+| Bedrock AgentCore Memory | Cross-run memory | AWS managed |
+| Bedrock Guardrails | Safety/PII layer | AWS managed |
+| AWS Cognito | Auth | AWS managed |
+| AWS Amplify Hosting | Frontend CDN | AWS managed |
+
+---
+
+## 10. Decision Traceability
+
+All decisions in this PRD are traceable to `decision-registry.yaml`. Key traceability links:
+
+| PRD Section | Registry Slugs |
+|---|---|
+| Agent topology (§4.1) | `agent-framework`, `agent-topology`, `orchestration-pattern`, `llm-choice` |
+| MCP layer (§4.2) | `mcp-server-pattern`, `mcp-server-topology`, `mcp-tool-definitions` |
+| RAG architecture (§4.3) | `vector-db-choice`, `rag-data-model-strategy`, `embedding-model`, `brand-guidelines-ingestion` |
+| Memory (§4.4) | `agent-memory-strategy` |
+| Data stores (§4.5) | `campaign-data-model` |
+| Frontend (§4.6) | `frontend-framework`, `notification-design`, `action-log-design` |
+| Backend API (§4.7) | `auth-strategy`, `tier-gating-pattern` |
+| Guardrails (§5) | `autonomous-action-scope`, `campaign-pause-requires-approval`, `spend-delta-approval-threshold`, `brand-protection-strategy`, `guardrail-settings-ui` |
+| Security/GDPR (§6) | `multi-tenant-isolation`, `gdpr-data-residency`, `gdpr-erasure-strategy`, `pii-handling-strategy`, `data-privacy-controls`, `audit-logging` |
+| Deployment (§7) | `compute-platform`, `frontend-compute-platform`, `deployment-pattern`, `monitoring-strategy`, `cost-management` |
+| Success metrics (§8) | `cpc-threshold-method`, `cpc-spike-threshold-pct`, `success-metrics` |
+| Subscriptions | `monetisation-model` |
+
+---
+
+*This document is the authoritative PRD for iteration 1. It was produced by `/aah-discuss` and is consumed by `/aah-arch` (module decomposition) and `/aah-plan` (feature decomposition into GitHub issues).*
+</script>
+<script src="https://cdn.jsdelivr.net/npm/marked@12/marked.min.js"></script>
+<script>
+(function() {
+  var md = document.getElementById('md').textContent;
+  document.getElementById('content').innerHTML = marked.parse(md);
+})();
+</script>
+</body>
+</html>

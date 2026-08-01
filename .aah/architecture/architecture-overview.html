@@ -282,6 +282,7 @@ body {
 </header>
 <div class="accent-bar"></div>
 <nav class="site-nav">
+<a href="../discuss/discuss-prd.html" >PRD</a>
 <a href="./agent-topology.html" >Agent Topology</a>
 <a href="./architecture-overview.html" class="nav-active">Architecture Overview</a>
 <a href="./data-model.html" >Data Model</a>
@@ -312,71 +313,54 @@ The Agentic Campaign Orchestrator is an autonomous SaaS platform that acts as a 
 
 ## 2. High-Level Component Map
 
-```
-┌──────────────────────────────────────────────────────────────────────────┐
-│                        Subscriber (Browser)                              │
-│   React 18 + TypeScript + Vite + Shadcn/UI (AWS Amplify Hosting)         │
-│   ┌─────────────────┐  ┌──────────────────┐  ┌──────────────────────┐   │
-│   │ Campaign Health │  │ Co-Pilot Action  │  │ Guardrail Settings   │   │
-│   │ Dashboard (SSE) │  │ Queue (approve/  │  │ Form (campaign rules │   │
-│   │                 │  │ reject)          │  │ + Bedrock Guardrails)│   │
-│   └────────┬────────┘  └────────┬─────────┘  └──────────┬───────────┘   │
-└────────────┼────────────────────┼──────────────────────────┼─────────────┘
-             │ FastAPI SSE        │ REST                      │ REST
-             │ (metrics +         │ (confirmations)           │ (guardrails)
-             │  AG-UI events)     │                           │
-┌────────────▼────────────────────▼──────────────────────────▼─────────────┐
-│                     FastAPI Backend (Python)                              │
-│   ┌───────────────────┐  ┌────────────────────┐  ┌───────────────────┐  │
-│   │ /api/v1/stream/   │  │ /api/v1/confirm-   │  │ /api/v1/guard-    │  │
-│   │  metrics (SSE)    │  │  ations (queue)    │  │  rails (settings) │  │
-│   │  agent-events     │  │                    │  │                   │  │
-│   │  (AG-UI proxy)    │  │                    │  │                   │  │
-│   └───────┬───────────┘  └────────┬───────────┘  └──────────┬────────┘  │
-│           │                       │ DynamoDB read             │ Bedrock   │
-│           │              Cognito JWT middleware                │ Guardrails│
-│           │              Tier gating + access logging         │ API       │
-└───────────┼───────────────────────┼──────────────────────────┼───────────┘
-            │                       │                           │
-            │ AgentCore AG-UI SSE   │                           │
-┌───────────▼───────────────────────┼───────────────────────────┼───────────┐
-│           AWS Bedrock AgentCore Runtime                       │           │
-│   ┌────────────────────────────────────────────────┐         │           │
-│   │         LangGraph StateGraph                   │         │           │
-│   │  ┌───────────┐  ┌───────────┐  ┌───────────┐  │         │           │
-│   │  │ Monitor   │─▶│ Reason    │─▶│ Act       │  │         │           │
-│   │  │ Agent     │  │ Agent     │  │ Agent     │  │         │           │
-│   │  │ (fast LLM)│  │ (full LLM)│  │ (MCP exec)│  │         │           │
-│   │  └─────┬─────┘  └─────┬─────┘  └─────┬─────┘  │         │           │
-│   └────────┼───────────────┼───────────────┼────────┘         │           │
-│            │ MCP           │ RAG retrieval │ MCP tool          │           │
-│            │ poll          │               │ execution         │           │
-└────────────┼───────────────┼───────────────┼──────────────────┼───────────┘
-             │               │               │                   │
-    ┌────────┴──────┐ ┌──────┴───────┐ ┌────┴──────────┐ ┌─────┴──────────┐
-    │  FastMCP      │ │ OpenSearch   │ │ FastMCP       │ │ Bedrock        │
-    │  Google Ads   │ │ Serverless   │ │ Meta Ads      │ │ Guardrails     │
-    │  Mock (8001)  │ │ (vector RAG) │ │ Mock (8002)   │ │ (PII + policy) │
-    └───────────────┘ └──────┬───────┘ └───────────────┘ └────────────────┘
-                             │
-                    ┌────────┴──────────────────────────────┐
-                    │          Data Layer                    │
-                    │  ┌─────────────────────────────────┐  │
-                    │  │ Aurora Serverless PostgreSQL     │  │
-                    │  │ (campaigns, metrics, brand_rules)│  │
-                    │  │ Row-Level Security on tenant_id  │  │
-                    │  └─────────────────────────────────┘  │
-                    │  ┌─────────────────────────────────┐  │
-                    │  │ DynamoDB                        │  │
-                    │  │ (action-audit, session-state,   │  │
-                    │  │  human-confirmations, pii-      │  │
-                    │  │  audience)                      │  │
-                    │  └─────────────────────────────────┘  │
-                    │  ┌─────────────────────────────────┐  │
-                    │  │ AgentCore Memory                │  │
-                    │  │ (EPISODIC + SEMANTIC)           │  │
-                    │  └─────────────────────────────────┘  │
-                    └───────────────────────────────────────┘
+```mermaid
+flowchart TB
+    subgraph Browser["Subscriber Browser · AWS Amplify Hosting"]
+        UI["React 18 + TypeScript + Vite + Shadcn/UI\nDashboard · Action Queue · Guardrail Settings"]
+    end
+
+    subgraph FastAPI["FastAPI Backend · Python"]
+        Endpoints["/stream/metrics · /stream/agent-events\n/confirmations · /guardrails · /auth"]
+        Auth["Cognito JWT Middleware\nTier Gating (observer / copilot / autopilot)\nCloudWatch Audit Logging"]
+    end
+
+    subgraph AgentCore["AWS Bedrock AgentCore Runtime · LangGraph StateGraph"]
+        Mon["Monitor Agent\nHaiku 4.5 · 60s CPC poll"]
+        Rea["Reason Agent\nClaude / GPT · RAG-augmented"]
+        Act["Act Agent\nMCP tool executor"]
+        Mon -->|CPC breach detected| Rea
+        Rea -->|typed Decision JSON| Act
+    end
+
+    subgraph MCPServers["MCP Servers · FastMCP · streamable-http"]
+        GA["Google Ads Mock\n:8001"]
+        Meta["Meta Ads Mock\n:8002"]
+    end
+
+    subgraph DataLayer["Data Layer"]
+        OS["OpenSearch Serverless\nBrand Guidelines · k-NN + BM25 Hybrid"]
+        Aurora["Aurora Serverless PostgreSQL\nMetrics · Campaigns · Brand Rules\nRow-Level Security on tenant_id"]
+        DDB["DynamoDB\nAction Audit · Confirmations · Session State"]
+        Mem["AgentCore Memory\nEPISODIC + SEMANTIC"]
+    end
+
+    Cognito["AWS Cognito\nOIDC / JWT · User Groups"]
+    BGuard["Bedrock Guardrails\nPII Redaction · Content Policy"]
+    Comp["AWS Comprehend\nPII Detection at ingest"]
+
+    Browser <-->|REST + SSE| FastAPI
+    FastAPI --> Cognito
+    FastAPI <-->|AG-UI SSE proxy| AgentCore
+    FastAPI --> DDB
+    Mon <-->|get_campaign_performance| MCPServers
+    Act <-->|pause / reallocate / bid| MCPServers
+    Rea <-->|brand guidelines retrieval| OS
+    Mon --> Aurora
+    Rea --> Aurora
+    Act --> DDB
+    Act <--> Mem
+    Rea <-->|inference guardrails| BGuard
+    OS --> Comp
 ```
 
 ---
@@ -530,10 +514,38 @@ auto      queued
 
 </script>
 <script src="https://cdn.jsdelivr.net/npm/marked@12/marked.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
 <script>
+mermaid.initialize({
+  startOnLoad: false,
+  theme: 'base',
+  themeVariables: {
+    primaryColor: '#eef7e1',
+    primaryTextColor: '#282728',
+    primaryBorderColor: '#86BC25',
+    lineColor: '#555',
+    secondaryColor: '#f4f9ee',
+    tertiaryColor: '#f8f8f8',
+    clusterBkg: '#f4f9ee',
+    clusterBorder: '#86BC25',
+    titleColor: '#282728',
+    edgeLabelBackground: '#ffffff',
+    fontFamily: 'Open Sans, sans-serif',
+    fontSize: '13px'
+  }
+});
 (function() {
   var md = document.getElementById('md').textContent;
   document.getElementById('content').innerHTML = marked.parse(md);
+  document.querySelectorAll('pre code.language-mermaid').forEach(function(el) {
+    var pre = el.parentElement;
+    var div = document.createElement('div');
+    div.className = 'mermaid';
+    div.style.cssText = 'background:#fff;border:1px solid #e0e0e0;border-radius:6px;padding:20px;margin:16px 0;overflow-x:auto;';
+    div.textContent = el.textContent;
+    pre.parentNode.replaceChild(div, pre);
+  });
+  mermaid.run({ querySelector: '.mermaid' });
 })();
 </script>
 </body>
